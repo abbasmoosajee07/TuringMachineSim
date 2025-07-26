@@ -4,7 +4,10 @@ import ctypes, platform, time, psutil
 from TuringMachine import MachineLogic, TuringConfig, TuringMachine
 
 class TuringGUI:
-    def __init__(self, transition_rules_str: str):
+    def __init__(self, transition_rules_str: str|None = None):
+        if not transition_rules_str:
+            transition_rules_str = """INIT | FIND | R\nFIND | FIND | R\nFIND _ HALT | R"""
+            self.default_tape = "||||"
         self.set_dpi_awareness()
         self.root = tk.Tk()
         self.root.title("Turing Machine Simulator")
@@ -12,6 +15,7 @@ class TuringGUI:
         # Disables resizing both horizontally and vertically
         self.root.resizable(False, False)
 
+        self.init_rules = transition_rules_str
         self.turing = TuringMachine(transition_rules_str)
         self.cpu = MachineLogic(self.turing.transition_rules)
 
@@ -55,9 +59,10 @@ class TuringGUI:
         config_frame = ttk.LabelFrame(self.main, text="Configuration", padding=10)
         config_frame.grid(row=3, column=0, sticky="nsew", padx=10, pady=10)
 
+        parsed_rules = "\n".join(line.lstrip() for line in self.init_rules.strip().splitlines())
         ttk.Label(config_frame, text="Transition Rules:").grid(row=0, column=0, sticky="w")
         self.rules_text = tk.Text(config_frame, height=6, width=40)
-        self.rules_text.insert("1.0", "INIT | FIND | R\nFIND | FIND | R\nFIND _ HALT | R")
+        self.rules_text.insert("1.0", parsed_rules)
         self.rules_text.grid(row=1, column=0, pady=5)
 
         ttk.Label(config_frame, text="Initial Tape:").grid(row=2, column=0, sticky="w")
@@ -203,9 +208,9 @@ class TuringGUI:
                 label.config(bg="white", fg="black", relief="solid", bd=0.25)
         self.status_label.config(text=f"State: {self.cpu.current_state} | Step: {self.step_count}")
 
-    def run_simulator(self, init_tape: str):
+    def run_simulator(self, init_tape: str|None = None):
         transition_rules = self.turing.transition_rules.copy()
-        self.initial_tape = init_tape
+        self.initial_tape = init_tape if init_tape else self.default_tape
         self.step_count = 0
         self.running = False
         self._build_gui()
@@ -226,3 +231,15 @@ class TuringGUI:
         ]
 
         return transition_rules, results, resources_used
+
+
+if __name__ == "__main__":
+    init_rules = """
+        INIT | FIND | R
+        FIND | FIND | R
+        FIND _ HALT | R
+        """
+
+    init_tape = "||||"
+
+    _, results, used_resources = TuringGUI(init_rules).run_simulator(init_tape)
