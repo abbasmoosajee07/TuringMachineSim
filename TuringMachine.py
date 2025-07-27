@@ -155,8 +155,12 @@ class MachineLogic:
             }
 
     def _get_tape_boundaries(self, window: int = 10) -> tuple[int, int]:
-        min_pos = min(self.tape.keys() if self.tape else self.head_position - window)
-        max_pos = max(self.tape.keys() if self.tape else self.head_position + window)
+        if self.tape:
+            min_pos = min(self.tape.keys())
+            max_pos = max(self.tape.keys())
+        else:
+            min_pos = self.head_position - window
+            max_pos = self.head_position + window
 
         min_pos = min(min_pos, self.head_position - window)
         max_pos = max(max_pos, self.head_position + window)
