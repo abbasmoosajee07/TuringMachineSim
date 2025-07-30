@@ -1,5 +1,33 @@
+class TuringConfig {
+    static LEFT = "L";
+    static RIGHT = "R";
+    static BLANK = "_";
+
+    static INIT_STATE = "INIT";
+    static HALT_STATE = "HALT";
+    static COMMENT_PREFIX = "//";
+
+    static MAX_STATES = 1024;
+    static MAX_TAPE_LEN = 1048576;
+    static MAX_STATE_SIZE = 32;
+    static TRANSITION_SIZE = 710000;
+
+    static getTimestamp() {
+        return performance.now() / 1000;
+    }
+
+    static getCurrentMemoryMB() {
+        return performance.memory ? (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) : 'N/A';
+    }
+}
+
+
 class MachineLogic {
-    constructor(transitionsList, initState = "INIT", haltState = "HALT", blankSymbol = TuringConfig.BLANK) {
+    constructor(
+        transitionsList,
+        initState = TuringConfig.INIT_STATE,
+        haltState = TuringConfig.HALT_STATE,
+        blankSymbol = TuringConfig.BLANK) {
         this.init_state = initState;
         this.halt_state = haltState;
         this.blank_symbol = blankSymbol;
@@ -99,29 +127,32 @@ class MachineLogic {
         }
     }
 
-    _getTapeBoundaries(windowSize = 10) {
+    _getTapeBoundaries(windowSize = 5) {
         const positions = Object.keys(this.tape).map(Number);
         let minPos = positions.length > 0 ? Math.min(...positions) : this.head_position - windowSize;
         let maxPos = positions.length > 0 ? Math.max(...positions) : this.head_position + windowSize;
 
-        minPos = Math.min(minPos, this.head_position - windowSize);
-        maxPos = Math.max(maxPos, this.head_position + windowSize);
+        minPos = Math.min(minPos, this.head_position) - windowSize;
+        maxPos = Math.max(maxPos, this.head_position) + windowSize;
         return [minPos, maxPos];
     }
 
     _printTapeState(visualize = true) {
         const [minPos, maxPos] = this._getTapeBoundaries();
-        let tapeStr = "";
+        const headPosInWindow = this.head_position - minPos;
 
+        let tapeStr = "";
         for (let i = minPos; i <= maxPos; i++) {
-            tapeStr += this.tape[i] !== undefined ? this.tape[i] : this.blank_symbol;
+            tapeStr += this.tape[i] ?? this.blank_symbol;
         }
+
+        const pointerStr = `${" ".repeat(headPosInWindow)}^`;
+        const printedState = [tapeStr, pointerStr, this.current_state, ""];
 
         if (visualize) {
-            // In the GUI, we'll update the display directly
+            console.log(printedState.join("\n"));
         }
 
-        // Return just the non-blank portion of the tape
         return tapeStr.replace(new RegExp(`^${this.blank_symbol}+|${this.blank_symbol}+$`, 'g'), '');
     }
 
@@ -131,7 +162,7 @@ class MachineLogic {
             throw new Error(`No transitions for state ${this.current_state} with input tape ${this.input_tape}`);
         }
 
-        const currentSymbol = this.tape[this.head_position] !== undefined ? this.tape[this.head_position] : this.blank_symbol;
+        const currentSymbol = this.tape[this.head_position] ?? this.blank_symbol;
         const transition = stateTransitions[currentSymbol];
         if (!transition) {
             throw new Error(`No transition for symbol '${currentSymbol}' in state ${this.current_state} with input tape ${this.input_tape}`);
@@ -139,24 +170,24 @@ class MachineLogic {
 
         const [newState, newSymbol, moveDirection] = transition;
 
-        // Write new symbol to tape
         if (newSymbol === this.blank_symbol) {
             delete this.tape[this.head_position];
         } else {
             this.tape[this.head_position] = newSymbol;
         }
 
-        // Move head
         const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
         this.current_state = newState;
         this.head_position += shift;
     }
 
     runLogic(inputTape, maxSteps = 1000000, visualize = false) {
+        this.input_tape = inputTape;
         this._setTape(inputTape);
         this._printTapeState(visualize);
 
         let stepCount = 0;
+        let tape = "";
         while (this.running && stepCount < maxSteps) {
             if (this.current_state === this.halt_state) {
                 this.running = false;
@@ -167,41 +198,59 @@ class MachineLogic {
             }
 
             this._stepLogic();
-            const tape = this._printTapeState(visualize);
+            tape = this._printTapeState(visualize);
             stepCount++;
         }
 
         return [tape, stepCount, this.transitions_list.length];
     }
 
-    runStep(inputTape, maxSteps = 1000000) {
+    async runStep(inputTape, visualize = true, maxSteps = 1000000) {
+        console.log("Turing Machine Initialized:");
+        this.input_tape = inputTape;
         this._setTape(inputTape);
-        this._printTapeState(true);
+        this._printTapeState(visualize);
 
-        if (this.current_state === this.halt_state) {
-            return [this._printTapeState(false), 0, this.transitions_list.length];
-        }
-
-        this._stepLogic();
-        const tape = this._printTapeState(true);
-        return [tape, 1, this.transitions_list.length];
-    }
-
-    runMultipleSteps(steps, maxSteps = 1000000) {
         let stepCount = 0;
         let tape = "";
 
-        while (this.running && stepCount < steps && stepCount < maxSteps) {
+        while (this.running && stepCount < maxSteps) {
             if (this.current_state === this.halt_state) {
                 this.running = false;
+                if (visualize) {
+                    console.log(`HALTED after ${stepCount} steps`);
+                }
                 break;
             }
 
-            this._stepLogic();
-            tape = this._printTapeState(true);
-            stepCount++;
+            const key = await new Promise(resolve => {
+                process.stdin.resume();
+                process.stdin.setEncoding('utf8');
+                process.stdin.once('data', data => resolve(data.trim()));
+            });
+
+            if (key === 'q') {
+                console.log("Machine Stopped Manually");
+                break;
+            } else if (key === '' || key === ' ') {
+                this._stepLogic();
+                stepCount++;
+                tape = this._printTapeState(visualize);
+            } else if (/^\d$/.test(key)) {
+                const stepsToRun = parseInt(key, 10);
+                for (let i = 0; i < stepsToRun; i++) {
+                    if (this.current_state === this.halt_state || !this.running) break;
+                    this._stepLogic();
+                    stepCount++;
+                    tape = this._printTapeState(visualize);
+                }
+            } else {
+                console.log(`Unrecognized key: '${key}'`);
+            }
         }
 
         return [tape, stepCount, this.transitions_list.length];
     }
 }
+
+export { TuringConfig, MachineLogic };

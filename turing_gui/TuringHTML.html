@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turing Machine Simulator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f5f5f5; }
+        .card { margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tape-wrapper {
+            width: 100%; overflow-x: auto; padding: 10px 0; margin: 10px 0;
+            background-color: #f9f9f9; border-radius: 4px;
+            scrollbar-width: thin; scrollbar-color: #888 #f1f1f1;
+        }
+        .tape-container { display: inline-flex; min-width: 100%; }
+        .tape-container::-webkit-scrollbar { height: 8px; }
+        .tape-container::-webkit-scrollbar-track {
+            background: #f1f1f1; border-radius: 4px;
+        }
+        .tape-container::-webkit-scrollbar-thumb {
+            background: #888; border-radius: 4px;
+        }
+        .tape-container::-webkit-scrollbar-thumb:hover { background: #555; }
+        .tape-cell {
+            min-width: 40px; width: 40px; height: 40px; border: 1px solid #ddd;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 2px; font-family: monospace; font-size: 18px;
+            background-color: white; flex-shrink: 0;
+        }
+        .tape-cell.active { border: 4px solid blue; font-weight: bold; }
+        .status-info { font-weight: bold; margin: 10px 0; }
+        .btn-group { margin-top: 15px; }
+        .monospace { font-family: monospace; }
+        .rules-info { font-family: monospace }
+        .step-state { font-family: monospace; font-size: 1.1rem; }
+        .step-index { font-family: monospace; color: blue; }
+        .info-btn {
+            top: 20px; right: 20px; width: 30px; height: 30px;
+            position: fixed; padding: 0; border-radius: 50%;
+            font-weight: bold; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .rulesText {
+            height: 120px; overflow-x: auto; white-space: nowrap;
+            resize: none; scrollbar-width: thin; font-family: monospace;
+        }
+        .rulesText::-webkit-scrollbar-track {
+            background: #f1f1f1; border-radius: 4px;
+        }
+        .rulesText::-webkit-scrollbar-thumb {
+            background: #888; border-radius: 4px;
+        }
+        .rulesText::-webkit-scrollbar-thumb:hover { background: #555; }
+        .tape-current {color: blue; font-weight: bold;}
+
+    </style>
+</head>
+<body>
+    <button class="btn btn-info info-btn fs-3" data-bs-toggle="modal" data-bs-target="#infoModal">?</button>
+
+    <!-- Info Modal -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="infoModalLabel">Turing Machine Help</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h5>🧠 Turing Machine Simulator Help</h5>
+                    <p>This simulator visualizes the execution of a deterministic Turing Machine.
+                    You can define custom rules, input tape values, and run the machine step-by-step or continuously.</p>
+                    <h5>📘 TRANSITION RULE FORMAT:</h5>
+<pre>currentState currentSymbol newState newSymbol moveDirection
+Example: INIT 0 INIT 0 R
+</pre>
+                    <h5>🔧 MACHINE BASICS:</h5>
+                    <ul>
+                        <li><strong>Initial State:</strong> '<span id="initStatePlaceholder"></span>'</li>
+                        <li><strong>Halt State:</strong> '<span id="haltStatePlaceholder"></span>'</li>
+                        <li><strong>Move Directions:</strong> 'L' (left), 'R' (right)</li>
+                        <li><strong>Blank Symbol:</strong> '<span id="blankSymbolPlaceholder"></span>'</li>
+                    </ul>
+                    <h5>🚦 MACHINE LIMITS:</h5>
+                    <ul>
+                        <li><strong>MAX_STATES:</strong> <span id="maxStatesPlaceholder"></span></li>
+                        <li><strong>MAX_TAPE_LEN:</strong> <span id="maxTapeLenPlaceholder"></span></li>
+                        <li><strong>MAX_STATE_SIZE:</strong> <span id="maxStateSizePlaceholder"></span> characters</li>
+                        <li><strong>TRANSITION_SIZE:</strong> <span id="transitionSizePlaceholder"></span> rules</li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Turing Machine Simulator</h1>
+        <!-- Tape Display -->
+        <div class="card">
+            <div class="card-header">Tape Display</div>
+            <div class="card-body">
+                <div class="tape-wrapper">
+                    <div id="tapeDisplay" class="tape-container"></div>
+                </div>
+                <div id="machineStatus" class="text-danger fw-bold text-center mt-1"">Machine Not Started</div>
+                <div class="mt-3">
+                    <label for="historySlider" class="form-label">Tape History:</label>
+                    <input type="range" class="form-range" id="historySlider" min="0" max="0" value="0">
+                    <div id="stepState" class="step-state text-center mt-1"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Machine Controls -->
+        <div class="row">
+            <!-- Configuration -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">Configure Model</div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="flex-grow-1">
+                            <!-- Transition Rules -->
+                            <div class="mb-3">
+                                <div class="d-flex align-items-center">
+                                    <label for="rulesText" class="form-label me-2 mb-0">Transition Rules:</label>
+                                </div>
+
+                                <div class="position-relative d-flex border rounded" style="height: 200px; overflow: hidden;">
+                                    <!-- Line numbers -->
+                                    <div id="lineNumbers" class="bg-light border-end text-end px-2 py-2 font-monospace" 
+                                        style="user-select: none; min-width: 1em; white-space: pre; overflow: hidden; color: #888;">
+                                    </div>
+
+                                    <!-- Textarea -->
+                                    <textarea id="rulesText" class="form-control font-monospace border-0" 
+                                        style="height: 100%; overflow-x: auto; white-space: nowrap; resize: none; flex: 1;">INIT | FIND | R
+FIND | FIND | R
+FIND _ HALT | R</textarea>
+                                </div>
+                            </div>
+                            <script>
+                                const rulesText = document.getElementById("rulesText");
+                                const lineNumbers = document.getElementById("lineNumbers");
+                                function updateLineNumbers() {
+                                    const lines = rulesText.value.split('\n').length;
+                                    lineNumbers.innerText = Array.from({ length: lines }, (_, i) => i + 1).join('\n');
+                                }
+
+                                rulesText.addEventListener("input", updateLineNumbers);
+                                rulesText.addEventListener("scroll", () => {
+                                    lineNumbers.scrollTop = rulesText.scrollTop;
+                                });
+
+                                // Initial call
+                                updateLineNumbers();
+                            </script>
+
+                            <!-- Initial Tape -->
+                            <div class="mb-2">
+                                <label for="tapeInput" class="form-label">Initial Tape:</label>
+                                <input type="text" id="tapeInput" class="form-control" value="||||">
+                            </div>
+                        </div>
+                        <div class="row mt-auto g-2 pt-3">
+                            <div class="col">
+                                <button id="loadBtn" class="btn btn-primary w-100">Load Model</button>
+                            </div>
+                            <div class="col">
+                                <button id="resetBtn" class="btn btn-secondary w-100">Reset Model</button>
+                            </div>
+                            <div class="col">
+                                <button id="copyRulesBtn" class="btn btn-outline-primary w-100">Copy Rules</button>
+                            </div>
+                            <div class="col">
+                                <button id="clearRulesBtn" class="btn btn-outline-danger w-100">Clear Rules</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Controls -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">Control Machine</div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="flex-grow-1">
+                            <div class="mb-4">
+                                <div class="row align-items-center g-2">
+                                    <div class="col-4">
+                                        <label for="gotoStep" class="form-label mb-0 w-100">Go to Step:</label>
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="number" id="gotoStep" class="form-control" min="0">
+                                    </div>
+                                    <div class="col-4">
+                                        <button class="btn btn-outline-primary w-100" id="gotoBtn">Go</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="stepEntry" class="form-label">Steps:</label>
+                                <input type="number" id="stepEntry" class="form-control" value="1" min="1">
+                            </div>
+                            <div class="mb-3">
+                                <label for="maxSteps" class="form-label">Max Steps:</label>
+                                <input type="number" id="maxSteps" class="form-control" value="1000000" min="1">
+                            </div>
+                            <div class="mb-3">
+                                <label for="delayEntry" class="form-label">Speed (ms):</label>
+                                <input type="number" id="delayEntry" class="form-control" value="300" min="1">
+                            </div>
+                        </div>
+                        <div class="row mt-auto g-2 pt-3">
+                            <div class="col-4">
+                                <button id="stepBtn" class="btn btn-secondary w-100">Step</button>
+                            </div>
+                            <div class="col-4">
+                                <button id="runBtn" class="btn btn-success w-100">Run</button>
+                            </div>
+                            <div class="col-4">
+                                <button id="pauseBtn" class="btn btn-warning w-100" disabled>Pause</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card mt-4">
+            <div class="card-header">Results</div>
+            <div class="card-body">
+                <div id="results" class="monospace"></div>
+                <div id="resources" class="monospace mt-2"></div>
+            </div>
+        </div>
+    </div>
+    <footer class="text-center py-3 mt-4 bg-light border-top">
+        <a href="https://github.com/abbasmoosajee07/TuringMachineSim" target="_blank"
+            title="View on GitHub" class="text-dark">
+            <i class="bi bi-github h4"></i>
+        </a>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        class TuringConfig {
+            static LEFT = "L";
+            static RIGHT = "R";
+            static BLANK = "_";
+            static HALT_STATE = "HALT";
+            static INIT_STATE = "INIT";
+            static COMMENT_PREFIX = "//";
+            static MAX_STATES = 1024;
+            static MAX_TAPE_LEN = 1048576;
+            static MAX_STATE_SIZE = 32;
+            static TRANSITION_SIZE = 710000;
+
+            static getTimestamp() {
+                return performance.now() / 1000;
+            }
+
+            static getCurrentMemoryMB() {
+                return performance.memory ? (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) : 'N/A';
+            }
+        }
+
+        class MachineLogic {
+            constructor(transitionsList, initState = "INIT", haltState = "HALT", blankSymbol = TuringConfig.BLANK) {
+                this.init_state = initState;
+                this.halt_state = haltState;
+                this.blank_symbol = blankSymbol;
+
+                this.MAX_STATES = TuringConfig.MAX_STATES;
+                this.MAX_STATE_SIZE = TuringConfig.MAX_STATE_SIZE;
+
+                this.transitions_list = transitionsList;
+                this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
+
+                // Initialize Tape
+                this.head_position = 0;
+                this.current_state = initState;
+                this.tape = {};
+                this.running = true;
+                this.input_tape = "";
+            }
+
+            _validateTransition(transition) {
+                if (transition.length !== 5) {
+                    throw new Error(`Invalid transition: ${transition}. Expected 5 elements: (currentState, currentSymbol, newState, newSymbol, moveDirection).`);
+                }
+
+                const [current_state, current_symbol, new_state, new_symbol, direction] = transition;
+
+                if (direction !== TuringConfig.LEFT && direction !== TuringConfig.RIGHT) {
+                    throw new Error(`Invalid move direction: '${direction}'. Must be 'L' or 'R'.`);
+                }
+
+                for (const [symbol, label] of [[current_symbol, "current"], [new_symbol, "new"]]) {
+                    if (symbol.length !== 1) {
+                        throw new Error(`Invalid ${label}_symbol: '${symbol}'. Must be a single character.`);
+                    }
+                }
+
+                for (const [state, label] of [[current_state, "current"], [new_state, "new"]]) {
+                    if (state.length > this.MAX_STATE_SIZE) {
+                        throw new Error(`Invalid ${label}_state: ${state} size=${state.length}. State Size must be less than ${this.MAX_STATE_SIZE} characters.`);
+                    }
+                }
+
+                return transition;
+            }
+
+            _buildTransitionDict(transitionsList, initState, haltState) {
+                const transitionDict = {};
+                let hasHaltState = false;
+
+                for (const transition of transitionsList) {
+                    const [currentState, currentSymbol, newState, newSymbol, moveDirection] = this._validateTransition(transition);
+
+                    if (!transitionDict[currentState]) {
+                        transitionDict[currentState] = {};
+                    }
+
+                    if (currentSymbol in transitionDict[currentState]) {
+                        throw new Error(`Duplicate transition for state ${currentState} and symbol ${currentSymbol}`);
+                    }
+
+                    transitionDict[currentState][currentSymbol] = [newState, newSymbol, moveDirection];
+
+                    if (newState === haltState) {
+                        hasHaltState = true;
+                    }
+                }
+
+                if (Object.keys(transitionDict).length > this.MAX_STATES) {
+                    throw new Error(`Too many states: ${Object.keys(transitionDict).length}. Maximum is ${this.MAX_STATES}.`);
+                }
+
+                if (!transitionDict[initState]) {
+                    throw new Error(`Initial state ${initState} not found in the transitions`);
+                }
+
+                if (!hasHaltState) {
+                    throw new Error(`Halt state ${haltState} not found in the transitions`);
+                }
+
+                return transitionDict;
+            }
+
+            _setTape(inputTape) {
+                if (inputTape.includes(" ")) {
+                    throw new Error("Input tape must not contain spaces");
+                }
+
+                this.head_position = 0;
+                this.current_state = this.init_state;
+                this.tape = {};
+                this.input_tape = inputTape;
+
+                for (let i = 0; i < inputTape.length; i++) {
+                    const symbol = inputTape[i];
+                    if (symbol !== this.blank_symbol) {
+                        this.tape[i] = symbol;
+                    }
+                }
+            }
+
+            _getTapeBoundaries(windowSize = 10) {
+                const positions = Object.keys(this.tape).map(Number);
+                let minPos = positions.length > 0 ? Math.min(...positions) : this.head_position - windowSize;
+                let maxPos = positions.length > 0 ? Math.max(...positions) : this.head_position + windowSize;
+
+                minPos = Math.min(minPos, this.head_position - windowSize);
+                maxPos = Math.max(maxPos, this.head_position + windowSize);
+                return [minPos, maxPos];
+            }
+
+            _printTapeState(visualize = true) {
+                const [minPos, maxPos] = this._getTapeBoundaries();
+                let tapeStr = "";
+
+                for (let i = minPos; i <= maxPos; i++) {
+                    tapeStr += this.tape[i] !== undefined ? this.tape[i] : this.blank_symbol;
+                }
+
+                if (visualize) {
+                    // In the GUI, we'll update the display directly
+                }
+
+                // Return just the non-blank portion of the tape
+                return tapeStr.replace(new RegExp(`^${this.blank_symbol}+|${this.blank_symbol}+$`, 'g'), '');
+            }
+
+            _stepLogic() {
+                const stateTransitions = this.transitions_dict[this.current_state];
+                if (!stateTransitions) {
+                    throw new Error(`No transitions for state ${this.current_state} with input tape ${this.input_tape}`);
+                }
+
+                const currentSymbol = this.tape[this.head_position] !== undefined ? this.tape[this.head_position] : this.blank_symbol;
+                const transition = stateTransitions[currentSymbol];
+                if (!transition) {
+                    throw new Error(`No transition for symbol '${currentSymbol}' in state ${this.current_state} with input tape ${this.input_tape}`);
+                }
+
+                const [newState, newSymbol, moveDirection] = transition;
+
+                // Write new symbol to tape
+                if (newSymbol === this.blank_symbol) {
+                    delete this.tape[this.head_position];
+                } else {
+                    this.tape[this.head_position] = newSymbol;
+                }
+
+                // Move head
+                const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
+                this.current_state = newState;
+                this.head_position += shift;
+            }
+
+            runLogic(inputTape, maxSteps = 1000000, visualize = false) {
+                this._setTape(inputTape);
+                this._printTapeState(visualize);
+
+                let stepCount = 0;
+                while (this.running && stepCount < maxSteps) {
+                    if (this.current_state === this.halt_state) {
+                        this.running = false;
+                        if (visualize) {
+                            console.log(`HALTED after ${stepCount} steps`);
+                        }
+                        continue;
+                    }
+
+                    this._stepLogic();
+                    const tape = this._printTapeState(visualize);
+                    stepCount++;
+                }
+
+                return [tape, stepCount, this.transitions_list.length];
+            }
+
+            runStep(inputTape, maxSteps = 1000000) {
+                this._setTape(inputTape);
+                this._printTapeState(true);
+
+                if (this.current_state === this.halt_state) {
+                    return [this._printTapeState(false), 0, this.transitions_list.length];
+                }
+
+                this._stepLogic();
+                const tape = this._printTapeState(true);
+                return [tape, 1, this.transitions_list.length];
+            }
+
+            runMultipleSteps(steps, maxSteps = 1000000) {
+                let stepCount = 0;
+                let tape = "";
+
+                while (this.running && stepCount < steps && stepCount < maxSteps) {
+                    if (this.current_state === this.halt_state) {
+                        this.running = false;
+                        break;
+                    }
+
+                    this._stepLogic();
+                    tape = this._printTapeState(true);
+                    stepCount++;
+                }
+
+                return [tape, stepCount, this.transitions_list.length];
+            }
+        }
+
+        class TuringMachineSimulator {
+            constructor() {
+                this.init_time = TuringConfig.getTimestamp();
+                this.MAX_STEPS = 1000000;
+                this.BASE_STEP = 1;
+                this.DELAY = 300;
+                this.step_count = 0;
+                this.running = false;
+                this.auto_run_timeout = null;
+                this.history = [];
+
+                this.initElements();
+                this.setupEventListeners();
+                this.load();
+            }
+
+            initElements() {
+                this.historySlider = document.getElementById('historySlider');
+                this.gotoStep = document.getElementById('gotoStep');
+                this.gotoBtn = document.getElementById('gotoBtn');
+                this.stepState = document.getElementById('stepState');
+                this.tapeDisplay = document.getElementById('tapeDisplay');
+                this.machineStatus = document.getElementById('machineStatus');
+                this.rulesText = document.getElementById('rulesText');
+                this.tapeInput = document.getElementById('tapeInput');
+                this.stepEntry = document.getElementById('stepEntry');
+                this.maxSteps = document.getElementById('maxSteps');
+                this.delayEntry = document.getElementById('delayEntry');
+                this.loadBtn = document.getElementById('loadBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.copyRulesBtn = document.getElementById('copyRulesBtn');
+                this.clearRulesBtn = document.getElementById('clearRulesBtn');
+                this.stepBtn = document.getElementById('stepBtn');
+                this.runBtn = document.getElementById('runBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.results = document.getElementById('results');
+                this.resources = document.getElementById('resources');
+            }
+
+            setupEventListeners() {
+                this.historySlider.addEventListener('input', () => this.seekHistory(parseInt(this.historySlider.value)));
+                this.gotoBtn.addEventListener('click', () => this.goToStep());
+                this.loadBtn.addEventListener('click', () => this.load());
+                this.resetBtn.addEventListener('click', () => this.reset());
+                this.copyRulesBtn.addEventListener('click', () => this.copyRules());
+                this.clearRulesBtn.addEventListener('click', () => this.clearRules());
+                this.stepBtn.addEventListener('click', () => this.step());
+                this.runBtn.addEventListener('click', () => this.run());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+            }
+
+            parseTransitionRules(transitionRulesStr) {
+                const transitionsList = [];
+                const rawRuleList = transitionRulesStr.split("\n");
+                for (const rawLine of rawRuleList) {
+                    const line = rawLine.trim();
+                    if (!line || line.startsWith("//")) continue;
+                    const cleanedLine = line.split("//")[0].trim();
+                    const values = cleanedLine.split(/\s+/).filter(val => val.trim());
+
+                    if (values.length !== 5) {
+                        throw new Error(`Invalid transition: "${cleanedLine}". Expected 5 elements, got ${values.length}`);
+                    }
+
+                    const [currentState, currentSymbol, newState, newSymbol, direction] = values;
+                    if (direction !== "L" && direction !== "R") {
+                        throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
+                    }
+
+                    for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
+                        if (symbol.length !== 1) {
+                            throw new Error(`Invalid ${label}_symbol '${symbol}'. Must be a single character.`);
+                        }
+                    }
+
+                    transitionsList.push([currentState, currentSymbol, newState, newSymbol, direction]);
+                }
+
+                if (transitionsList.length === 0) {
+                    throw new Error("No valid transition rules found.");
+                }
+
+                return transitionsList;
+            }
+
+            load() {
+                try {
+                    const rules = this.rulesText.value;
+                    const transitions = this.parseTransitionRules(rules);
+                    this.initial_tape = this.tapeInput.value || "||||";
+                    this.init_time = TuringConfig.getTimestamp();
+                    this.cpu = new MachineLogic(transitions);
+                    this.cpu._setTape(this.initial_tape);
+
+                    this.step_count = 0;
+                    this.running = false;
+                    this.machineStatus.textContent = "";
+
+                    this.history = [{
+                        tape: { ...this.cpu.tape },
+                        head: this.cpu.head_position,
+                        state: this.cpu.current_state
+                    }];
+
+                    this.updateUI();
+                } catch (error) {
+                    console.error("Load error:", error);
+                    alert(`Error during load: ${error.message}`);
+                }
+            }
+
+            reset() {
+                clearTimeout(this.auto_run_timeout);
+                try {
+                    if (!this.initial_tape) {
+                        alert("Initial configuration not loaded. Click 'Load' first.");
+                        return;
+                    }
+                    this.init_time = TuringConfig.getTimestamp();
+                    this.cpu._setTape(this.initial_tape);
+                    this.step_count = 0;
+                    this.running = false;
+                    this.machineStatus.textContent = "";
+
+                    this.history = [{
+                        tape: { ...this.cpu.tape },
+                        head: this.cpu.head_position,
+                        state: this.cpu.current_state
+                    }];
+                    this.updateUI();
+                } catch (error) {
+                    console.error("Reset error:", error);
+                    alert(`Error during reset: ${error.message}`);
+                }
+            }
+
+            run() {
+                this.running = true;
+                this.runBtn.disabled = true;
+                this.pauseBtn.disabled = false;
+                this.autoStep();
+            }
+
+            pause() {
+                this.running = false;
+                clearTimeout(this.auto_run_timeout);
+                this.runBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+            }
+
+            step() {
+                try {
+                    const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
+                    const max_allowed = parseInt(this.maxSteps.value) || this.MAX_STEPS;
+                    
+                    for (let i = 0; i < steps_to_run; i++) {
+                        if (this.step_count >= max_allowed) {
+                            this.machineStatus.textContent = `Max steps (${max_allowed}) reached`;
+                            this.pause();
+                            break;
+                        }
+
+                        if (this.cpu.current_state === this.cpu.halt_state) {
+                            this.machineStatus.textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
+                            this.pause();
+                            break;
+                        }
+
+                        try {
+                            this.cpu._stepLogic();
+                            this.step_count++;
+                            
+                            this.history.push({
+                                tape: { ...this.cpu.tape },
+                                head: this.cpu.head_position,
+                                state: this.cpu.current_state
+                            });
+                            
+                            this.updateUI();
+                            
+                        } catch (error) {
+                            this.machineStatus.textContent = `Machine STUCK | After ${this.step_count} steps`;
+                            this.pause();
+                            throw error;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Step error:", error);
+                    alert(`Error during step: ${error.message}`);
+                }
+            }
+
+            autoStep() {
+                if (!this.running) return;
+                if (this.cpu.current_state === this.cpu.halt_state) {
+                    this.machineStatus.textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
+                    this.pause();
+                    return;
+                }
+                
+                this.step();
+                
+                const delay = parseInt(this.delayEntry.value) || this.DELAY;
+                this.auto_run_timeout = setTimeout(() => this.autoStep(), delay);
+            }
+
+            updateUI() {
+                // Update tape display
+                this.tapeDisplay.innerHTML = "";
+                
+                const positions = Object.keys(this.cpu.tape).map(Number);
+                const min_pos = positions.length > 0 ? Math.min(...positions) : 0;
+                const max_pos = positions.length > 0 ? Math.max(...positions) : 0;
+                
+                // Show at least 5 cells before and after the head position
+                const start_pos = Math.min(min_pos, this.cpu.head_position) - 5;
+                const end_pos = Math.max(max_pos, this.cpu.head_position) + 5;
+                
+                for (let pos = start_pos; pos <= end_pos; pos++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'tape-cell';
+                    cell.textContent = this.cpu.tape[pos] !== undefined ? this.cpu.tape[pos] : this.cpu.blank_symbol;
+                    if (pos === this.cpu.head_position) {
+                        cell.classList.add('active');
+                    }
+                    this.tapeDisplay.appendChild(cell);
+                }
+                
+                // Center the active cell
+                const activeCell = this.tapeDisplay.querySelector('.active');
+                if (activeCell) {
+                    activeCell.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest',
+                        inline: 'center'
+                    });
+                }
+                
+                // Update status
+                this.historySlider.max = this.history.length - 1;
+                this.historySlider.value = this.step_count;
+                this.gotoStep.value = this.step_count;
+                
+                // Update step state display
+                this.updateStepState();
+                
+                // Update results
+                this.updateResults();
+            }
+
+            updateResults() {
+                const final_tape = this.cpu._printTapeState();
+                const resources_used = [
+                    `Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
+                    `Memory used: ${TuringConfig.getCurrentMemoryMB()}MB`
+                ];
+
+                const results = [
+                    `Result Tape: '${final_tape}'`,
+                    `Steps Count: ${this.step_count}`,
+                    `Total Rules: ${this.cpu.transitions_list.length}`,
+                    ...resources_used
+                ];
+                
+                this.results.innerHTML = results.join('<br>');
+            }
+
+            seekHistory(step) {
+                step = parseInt(step);
+                if (isNaN(step)) return;
+                
+                if (step < 0 || step >= this.history.length) {
+                    return;
+                }
+                
+                const snapshot = this.history[step];
+                this.cpu.tape = { ...snapshot.tape };
+                this.cpu.head_position = snapshot.head;
+                this.cpu.current_state = snapshot.state;
+                this.step_count = step;
+                this.updateUI();
+            }
+
+            updateStepState() {
+                const step = parseInt(this.historySlider.value);
+                const prev = step > 0 ? this.history[step - 1].state : "--";
+                const curr = this.history[step].state;
+                const next = step + 1 < this.history.length ? this.history[step + 1].state : 
+                    (step === this.step_count ? "--" : "--");
+                this.stepState.innerHTML = ` Step [${step}]: ${prev} <- <span class="tape-current">${curr}</span> -> ${next}`;
+
+            }
+
+            goToStep() {
+                const step = parseInt(this.gotoStep.value);
+                if (isNaN(step)) {
+                    alert("Please enter a valid step number");
+                    return;
+                }
+                
+                if (step < 0 || step > this.history.length - 1) {
+                    alert(`Step must be between 0 and ${this.history.length - 1}`);
+                    return;
+                }
+                
+                this.historySlider.value = step;
+                this.seekHistory(step);
+            }
+
+            copyRules() {
+                const rules = this.rulesText.value;
+                if (!rules.trim()) {
+                    alert("No rules to copy");
+                    return;
+                }
+                
+                navigator.clipboard.writeText(rules)
+                    .then(() => alert("Transition rules copied to clipboard"))
+                    .catch(err => {
+                        console.error("Failed to copy rules:", err);
+                        alert("Failed to copy rules. Please try again.");
+                    });
+            }
+
+            clearRules() {
+                if (confirm("Are you sure you want to clear all transition rules?")) {
+                    this.rulesText.value = "";
+                }
+            }
+        }
+
+        // Populate the help section with values from TuringConfig
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
+            document.getElementById('haltStatePlaceholder').textContent = TuringConfig.HALT_STATE;
+            document.getElementById('blankSymbolPlaceholder').textContent = TuringConfig.BLANK;
+            document.getElementById('maxStatesPlaceholder').textContent = TuringConfig.MAX_STATES.toLocaleString();
+            document.getElementById('maxTapeLenPlaceholder').textContent = TuringConfig.MAX_TAPE_LEN.toLocaleString();
+            document.getElementById('maxStateSizePlaceholder').textContent = TuringConfig.MAX_STATE_SIZE;
+            document.getElementById('transitionSizePlaceholder').textContent = TuringConfig.TRANSITION_SIZE.toLocaleString();
+
+            const simulator = new TuringMachineSimulator();
+        });
+
+    </script>
+</body>
+
+</html>
