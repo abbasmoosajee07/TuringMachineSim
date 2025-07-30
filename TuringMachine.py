@@ -65,6 +65,7 @@ class MachineLogic:
         self.transitions_dict = self._build_transition_dict(
             transitions_list, init_state, halt_state
         )
+        self.rules_no = len(self.transitions_list)
 
         # Initialize Tape
         self.head_position: int = None
@@ -162,8 +163,8 @@ class MachineLogic:
             min_pos = self.head_position - window
             max_pos = self.head_position + window
 
-        min_pos = min(min_pos, self.head_position - window)
-        max_pos = max(max_pos, self.head_position + window)
+        min_pos = min(min_pos, self.head_position) - window
+        max_pos = max(max_pos, self.head_position) + window
         return min_pos, max_pos
 
     def _print_tape_state(self, visualize_state: bool = True) -> str:
@@ -280,8 +281,7 @@ class MachineLogic:
 
             else:
                 print(f"Unrecognized key: {repr(key)}")
-
-        return tape, step_count, len(self.transitions_list)
+        return tape, step_count, self.rules_no
 
 class TuringMachine:
     LEFT  = TuringConfig.LEFT
@@ -365,3 +365,14 @@ class TuringMachine:
         ]
 
         return transition_rules, results, resources_used
+
+if __name__ == "__main__":
+    init_rules = """
+        INIT | FIND | R
+        FIND | FIND | R
+        FIND _ HALT | R
+        """
+
+    init_tape = "||||"
+
+    _, results, used_resources = TuringMachine(init_rules).run_machine(init_tape)
