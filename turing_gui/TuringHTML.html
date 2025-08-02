@@ -1,1266 +1,1236 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Turing Machine Simulator</title>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-        <style>
-            /* === ROOT VARIABLES === */
-            :root {
-                --primary-color: #fd0d8d;
-                --primary-hover: #f381cf;
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turing Machine Simulator</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Ace Editor CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.css">
+    <style>
+        /* === ROOT VARIABLES === */
+        :root {
+            --primary-color: #fd0d8d;
+            --primary-hover: #f381cf;
 
-                --reset-bg: #5a4cd1;
-                --load-bg: #019875;
-                --copy-bg: #0778c4;
-                --clear-bg: #c0392b;
-                --goto-bg: #4bf542;
-                --step-bg: #cf5e45;
-                --run-bg: #00b0ae;
-                --pause-bg: #ffdd48;
+            --reset-bg: #5a4cd1;
+            --load-bg: #019875;
+            --copy-bg: #0778c4;
+            --clear-bg: #c0392b;
+            --goto-bg: #4bf542;
+            --step-bg: #cf5e45;
+            --run-bg: #00b0ae;
+            --pause-bg: #ffdd48;
 
-                --hover-brightness: 1.2;
-                --active-brightness: 0.8;
-            }
+            --hover-brightness: 1.2;
+            --active-brightness: 0.8;
+        }
 
-            /* === INPUT STYLING === */
-            input:focus,
-            input:hover {
-                outline: none !important;
-                box-shadow: none !important;
-            }
+        /* === INPUT STYLING === */
+        input:focus,
+        input:hover {
+            outline: none !important;
+            box-shadow: none !important;
+        }
 
-            input.form-control:focus {
-                outline: none;
-                border-color: var(--primary-hover);
-                border-width: 1px;
-            }
+        input.form-control:focus {
+            outline: none;
+            border-color: var(--primary-hover);
+            border-width: 1px;
+        }
 
-            /* === BODY BASE STYLES === */
-            body {
-                background-color: #f5f5f5;
-                font-size: 0.9rem;
-            }
+        /* === BODY BASE STYLES === */
+        body {
+            background-color: #f5f5f5;
+            font-size: 0.9rem;
+        }
 
-            /* === SLIDER (WebKit Browsers) === */
-            .slider-primary::-webkit-slider-thumb {
-                background-color: var(--primary-color);
-                border: none;
-                border-radius: 50%;
-                height: 16px;
-                width: 16px;
-                margin-top: -6px;
-                cursor: pointer;
-                transition: background 0.3s;
-            }
+        /* === SLIDER (WebKit Browsers) === */
+        .slider-primary::-webkit-slider-thumb {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            height: 16px;
+            width: 16px;
+            margin-top: -6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
 
-            .slider-primary:hover::-webkit-slider-thumb {
-                background-color: var(--primary-hover);
-                transform: scale(1.05);
-            }
+        .slider-primary:hover::-webkit-slider-thumb {
+            background-color: var(--primary-hover);
+            transform: scale(1.05);
+        }
 
-            .slider-primary::-webkit-slider-runnable-track {
-                background-color: #ddd;
-                height: 6px;
-                border-radius: 3px;
-            }
+        .slider-primary::-webkit-slider-runnable-track {
+            background-color: #ddd;
+            height: 6px;
+            border-radius: 3px;
+        }
 
-            /* === TYPOGRAPHY === */
-            .stepState {
-                font-size: 1.15rem;
-                font-weight: 300;
-                letter-spacing: 0.35px;
-                margin-top: 0.5rem;
-            }
+        /* === TYPOGRAPHY === */
+        .stepState {
+            font-size: 1.15rem;
+            font-weight: 300;
+            letter-spacing: 0.35px;
+            margin-top: 0.5rem;
+        }
 
-            .monospace,
-            .rules-info,
-            .step-state,
-            .rulesText {
-                font-family: monospace;
-                font-size: 0.9rem;
-            }
+        .monospace,
+        .rules-info,
+        .step-state {
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
 
-            /* === CARD STYLES === */
-            .card {
-                margin-bottom: 20px;
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
+        /* === CARD STYLES === */
+        .card {
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
 
-            .card-header {
-                font-weight: bold;
-                font-size: 1.05rem;
-                background-color: #f9f9f9;
-                color: #333;
-                padding: 0.4rem 0.8rem;
-                border-bottom: 1px solid #dee2e6;
-                letter-spacing: 0.5px;
-            }
+        .card-header {
+            font-weight: bold;
+            font-size: 1.05rem;
+            background-color: #f9f9f9;
+            color: #333;
+            padding: 0.4rem 0.8rem;
+            border-bottom: 1px solid #dee2e6;
+            letter-spacing: 0.5px;
+        }
 
-            /* === TAPE STYLES === */
-            .tape-wrapper {
-                width: 100%;
-                overflow-x: auto;
-                padding: 10px 0;
-                margin: 10px 0;
-                background-color: #f9f9f9;
-                border-radius: 2px;
-                border: 1pt solid #ccc;
-                scrollbar-width: thin;
-                scrollbar-color: #888 #f1f1f1;
-            }
+        /* === TAPE STYLES === */
+        .tape-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding: 10px 0;
+            margin: 10px 0;
+            background-color: #f9f9f9;
+            border-radius: 2px;
+            border: 1pt solid #ccc;
+            scrollbar-width: thin;
+            scrollbar-color: #888 #f1f1f1;
+        }
 
-            .tape-container {
-                display: inline-flex;
-                min-width: 100%;
-            }
+        .tape-container {
+            display: inline-flex;
+            min-width: 100%;
+        }
 
-            .tape-cell {
-                min-width: 40px;
-                width: 40px;
-                height: 40px;
-                border: 1px solid #ddd;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 2px;
-                font-size: 21px;
-                background-color: white;
-                flex-shrink: 0;
-                font-weight: 600; /* <- make all text bold */
-            }
+        .tape-cell {
+            min-width: 40px;
+            width: 40px;
+            height: 40px;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 2px;
+            font-size: 21px;
+            background-color: white;
+            flex-shrink: 0;
+            font-weight: 600; /* <- make all text bold */
+        }
 
-            .tape-cell.active {
-                border: 4px solid var(--primary-color);
-                font-weight: bold;
-            }
+        .tape-cell.active {
+            border: 4px solid var(--primary-color);
+            font-weight: bold;
+        }
 
-            .tape-current {
-                color: var(--primary-color);
-                font-weight: bold;
-            }
+        .tape-current {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
 
-            /* === SCROLLBAR STYLING === */
-            .tape-container::-webkit-scrollbar,
-            .rulesText::-webkit-scrollbar {
-                height: 8px;
-            }
+        /* === SCROLLBAR STYLING === */
+        .tape-container::-webkit-scrollbar{
+            height: 8px;
+        }
 
-            .tape-container::-webkit-scrollbar-track,
-            .rulesText::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 4px;
-            }
+        .tape-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
 
-            .tape-container::-webkit-scrollbar-thumb,
-            .rulesText::-webkit-scrollbar-thumb {
-                background: #888;
-                border-radius: 4px;
-            }
+        .tape-container::-webkit-scrollbar-thumb{
+            background: #888;
+            border-radius: 4px;
+        }
 
-            .tape-container::-webkit-scrollbar-thumb:hover,
-            .rulesText::-webkit-scrollbar-thumb:hover {
-                background: #555;
-            }
+        .tape-container::-webkit-scrollbar-thumb:hover{
+            background: #555;
+        }
 
-            /* === RULES TEXTAREA === */
-            #rulesText:focus,
-            #rulesText:hover,
-            #rulesText:active {
-                border: none !important;
-                outline: none !important;
-                box-shadow: none !important;
-                border-color: transparent !important;
-            }
+        /* === RULES TEXTAREA === */
+        #rulesEditor { 
+            height: 200px;
+            width: 100%;
+            border: 1px solid #dee2e6;
+            border-radius: 0.25rem;
+        }
+        .ace_gutter {
+            background-color: #f8f9fa !important;
+            color: #6c757d !important;
+        }
+        .monospace {
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
 
-            #rulesText,
-            #lineNumbers {
-                font-size: 0.85rem;
-                font-family: monospace;
-                line-height: 1.4;
-            }
 
-            #rulesText {
-                border: none !important;
-                outline: none !important;
-                box-shadow: none !important;
-                background-color: transparent;
-                color: inherit;
-                font-size: 14px;
-            }
+        /* === STATE INDICATORS === */
+        .step-state {
+            font-size: 1.1rem;
+        }
 
-            .rulesText {
-                height: 120px;
-                overflow-x: auto;
-                white-space: nowrap;
-                resize: none;
-                scrollbar-width: thin;
-            }
+        .step-index {
+            color: var(--primary-color);
+        }
 
-            /* === STATE INDICATORS === */
-            .step-state {
-                font-size: 1.1rem;
-            }
+        .machineStatus {
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
 
-            .step-index {
-                color: var(--primary-color);
-            }
+        /* === BUTTON GROUP === */
+        .btn-group {
+            margin-top: 15px;
+        }
 
-            #machineStatus {
-                transition: all 0.3s ease;
-                font-size: 1.1rem;
-            }
-
-            /* === BUTTON GROUP === */
-            .btn-group {
-                margin-top: 15px;
-            }
-
-            /* === INFO BUTTON === */
-            .info-btn {
+        /* === INFO BUTTON === */
+        .info-btn {
             position: fixed;
             top: 20px;
-                right: 20px;
-                width: 35px;
-                height: 35px;
-                padding: 0;
-                border: none;
-                border-radius: 50%;
-                font-weight: bold;
-                font-size: 1.2rem;
-                background-color: var(--primary-color);
-                color: white;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-                z-index: 1000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transition: background-color 0.2s, transform 0.2s;
-                cursor: pointer;
-                }
-
-                .info-btn:hover {
-                background-color: var(--primary-hover);
-                transform: scale(1.05);
-                }
-
-                /* === CLOSE BUTTON === */
-                .custom-close-btn {
-                background-color: transparent;
-                border: none;
-                color: #656565;
-                width: 30px;
-                height: 30px;
-                padding: 0;
-                border-radius: 50%;
-                font-weight: bold;
-                font-size: 1.25rem;
-                transition: background-color 0.2s, color 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+            right: 20px;
+            width: 35px;
+            height: 35px;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.2rem;
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s, transform 0.2s;
+            cursor: pointer;
             }
 
-            .custom-close-btn:hover {
-                background-color: #9e9999;
-                color: #000;
-                cursor: pointer;
+            .info-btn:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.05);
             }
 
-            /* === BUTTON ICON SPACING === */
-            .btn i {
-                margin-right: 5px;
-            }
+            /* === CLOSE BUTTON === */
+            .custom-close-btn {
+            background-color: transparent;
+            border: none;
+            color: #656565;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.25rem;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-            /* === CONTROL BUTTON === */
-            .control-btn {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 35px;
-                height: 35px;
-                border-radius: 50%;
-                font-size: 1.2rem;
-                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-                z-index: 2000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: none;
-                transition: all 0.3s ease;
-            }
+        .custom-close-btn:hover {
+            background-color: #9e9999;
+            color: #000;
+            cursor: pointer;
+        }
 
-            .control-btn:hover {
-                transform: scale(1.15);
-            }
+        /* === BUTTON ICON SPACING === */
+        .btn i {
+            margin-right: 5px;
+        }
 
-            /* === BUTTON BASE === */
-            .btn {
-                display: inline-block;
-                vertical-align: middle;
-                text-align: center;
-                font-weight: 550;
-                color: black !important;
-                transition: filter 0.2s ease, background-color 0.2s ease;
-                user-select: none;
-            }
+        /* === CONTROL BUTTON === */
+        .control-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: all 0.3s ease;
+        }
 
-            /* === BUTTON VARIANTS === */
-            .btn-reset  { background-color: var(--reset-bg) !important; }
-            .btn-load   { background-color: var(--load-bg) !important; }
-            .btn-copy   { background-color: var(--copy-bg) !important; }
-            .btn-clear  { background-color: var(--clear-bg) !important; }
-            .btn-goto   { background-color: var(--goto-bg) !important; }
-            .btn-step   { background-color: var(--step-bg) !important; }
-            .btn-run    { background-color: var(--run-bg) !important; }
-            .btn-pause  { background-color: var(--pause-bg) !important; }
+        .control-btn:hover {
+            transform: scale(1.15);
+        }
 
-            /* === BUTTON INTERACTIONS === */
-            .btn:hover,
-            .btn:focus,
-            .btn:focus-visible {
-                filter: brightness(var(--hover-brightness)) !important;
-                transform: scale(1.05);
+        /* === BUTTON BASE === */
+        .btn {
+            display: inline-block;
+            vertical-align: middle;
+            text-align: center;
+            font-weight: 550;
+            color: black !important;
+            transition: filter 0.2s ease, background-color 0.2s ease;
+            user-select: none;
+        }
 
-            }
-            .btn:active {
-                filter: brightness(var(--active-brightness)) !important;
-                border: none !important;
-            }
+        /* === BUTTON VARIANTS === */
+        .btn-reset  { background-color: var(--reset-bg) !important; }
+        .btn-load   { background-color: var(--load-bg) !important; }
+        .btn-copy   { background-color: var(--copy-bg) !important; }
+        .btn-clear  { background-color: var(--clear-bg) !important; }
+        .btn-goto   { background-color: var(--goto-bg) !important; }
+        .btn-step   { background-color: var(--step-bg) !important; }
+        .btn-run    { background-color: var(--run-bg) !important; }
+        .btn-pause  { background-color: var(--pause-bg) !important; }
 
-            /* === DISABLED BUTTON STATE === */
-            button:disabled,
-            .btn:disabled {
-                background-color: #e0e0e0 !important;
-                color: #888 !important;
-                border-color: #ccc !important;
-                cursor: not-allowed !important;
-                opacity: 1 !important;
-                filter: none !important;
-            }
+        /* === BUTTON INTERACTIONS === */
+        .btn:hover,
+        .btn:focus,
+        .btn:focus-visible,
+        .info-btn {
+            filter: brightness(var(--hover-brightness)) !important;
+            transform: scale(1.05);
+        }
 
-        </style>
-    </head>
+        .btn:active,
+        .info-btn {
+            filter: brightness(var(--active-brightness)) !important;
+            border: none !important;
+        }
 
-    <body>
-        <!-- Control button -->
-        <button id="ControlBtn" class="control-btn bi bi-play-fill"></i> Run
-        </button>
+        /* === DISABLED BUTTON STATE === */
+        button:disabled,
+        .btn:disabled {
+            background-color: #e0e0e0 !important;
+            color: #888 !important;
+            border-color: #ccc !important;
+            cursor: not-allowed !important;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+    </style>
+</head>
 
-        <!-- Your existing info button -->
-        <button class="btn btn-info info-btn fs-3 bi bi-question-lg" data-bs-toggle="modal" data-bs-target="#infoModal"></button>
-        <!-- Info Modal -->
-        <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true"
-            data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h6 class="modal-title" id="infoModalLabel">Turing Machine Help</h6>
-                        <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
+<body>
+    <!-- Control button -->
+    <button id="ControlBtn" class="control-btn bi bi-play-fill">Run</button>
+
+    <!-- Info button -->
+    <button class="btn btn-info info-btn fs-3 bi bi-question-lg" data-bs-toggle="modal" data-bs-target="#infoModal"></button>
+
+    <!-- Info Modal -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true"
+        data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title" id="infoModalLabel">Turing Machine Help</h6>
+                    <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h5>🧠 Turing Machine Simulator Help</h5>
+                    <p>This simulator visualizes the execution of a deterministic Turing Machine.
+                    You can define custom rules, input tape values, and run the machine step-by-step or continuously.</p>
+                    
+                    <h5>📘 TRANSITION RULE FORMAT:</h5>
+                    <span class="code">
+                        currentState currentSymbol newState newSymbol moveDirection
+                        Example: INIT 0 INIT 0 R
+                    </span>
+                    
+                    <h6>🔧 BASIC SETUP:</h6>
+                    <div class="small">
+                        <ul>
+                            <li>Blank Symbol: '<span id="blankSymbolPlaceholder"></span>'</li>
+                            <li>Initial State: '<span id="initStatePlaceholder"></span>'</li>
+                            <li>Halt State: '<span id="haltStatePlaceholder"></span>'</li>
+                            <li>Move Directions: 'L' (left) | 'R' (right)</li>
+                        </ul>
                     </div>
-                    <div class="modal-body">
-                        <h5>🧠 Turing Machine Simulator Help</h5>
-                        <p>This simulator visualizes the execution of a deterministic Turing Machine.
-                        You can define custom rules, input tape values, and run the machine step-by-step or continuously.</p>
-                        <h5>📘 TRANSITION RULE FORMAT:</h5>
-    <span class="code">
-        currentState currentSymbol newState newSymbol moveDirection
-    Example: INIT 0 INIT 0 R
-    </span>
-                        <h6>🔧 BASIC SETUP:</h6>
-                        <div class="small">
-                            <ul>
-                                <li>Blank Symbol: '<span id="blankSymbolPlaceholder"></span>'</li>
-                                <li>Initial State: '<span id="initStatePlaceholder"></span>'</li>
-                                <li>Halt State: '<span id="haltStatePlaceholder"></span>'</li>
-                                <li>Move Directions: 'L' (left) | 'R' (right)</li>
-                            </ul>
-                        </div>
 
-                        <h6>🚦 MACHINE LIMITS:</h6>
-                        <div class="small">
-                            <ul>
-                                <li>MAX STATES: <span id="maxStatesPlaceholder"></span></li>
-                                <li>MAX TAPE LEN: <span id="maxTapeLenPlaceholder"></span></li>
-                                <li>MAX STATE SIZE: <span id="maxStateSizePlaceholder"></span> characters</li>
-                                <li>TRANSITION SIZE: <span id="transitionSizePlaceholder"></span> rules</li>
-                            </ul>
-                        </div>
+                    <h6>🚦 MACHINE LIMITS:</h6>
+                    <div class="small">
+                        <ul>
+                            <li>MAX STATES: <span id="maxStatesPlaceholder"></span></li>
+                            <li>MAX TAPE LEN: <span id="maxTapeLenPlaceholder"></span></li>
+                            <li>MAX STATE SIZE: <span id="maxStateSizePlaceholder"></span> characters</li>
+                            <li>TRANSITION SIZE: <span id="transitionSizePlaceholder"></span> rules</li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Main GUI-->
-        <div class="container mt-4">
-            <h1 class="text-center mb-4">Turing Machine Simulator</h1>
+    <!-- Main GUI-->
+    <div class="container mt-4">
+        <h1 class="text-center mb-4">Turing Machine Simulator</h1>
 
-            <!-- Tape Display -->
-            <div class="card">
+        <!-- Tape Display -->
+        <div class="card">
             <div class="card-header">Ticker Tape</div>
-
             <div class="card-body">
                 <!-- Tape Display -->
                 <div class="mb-4">
-                <div class="tape-wrapper border rounded p-2 bg-light">
-                    <div id="tapeDisplay" class="tape-container"></div>
-                </div>
+                    <div class="tape-wrapper border rounded p-2 bg-light">
+                        <div id="tapeDisplay" class="tape-container"></div>
+                    </div>
                 </div>
 
                 <!-- Machine Status -->
                 <div class="mb-2">
-                <div id="machineStatus" class="text-danger fw-bold text-center"></div>
+                    <div id="machineStatus" class="text-danger fw-bold text-center"></div>
                 </div>
 
                 <!-- History Slider and Step Info -->
                 <div class="mb-4">
-                <label for="historySlider" class="form-label fw-semibold">Step History:</label>
-                <input
-                    type="range"
-                    class="form-range slider-primary"
-                    id="historySlider", min="0", max="0", value="0"
-                />
+                    <label for="historySlider" class="form-label fw-semibold">Step History:</label>
+                    <input type="range" class="form-range slider-primary" id="historySlider" min="0" max="0" value="0">
                 </div>
 
                 <div id="stepState" class="step-state text-center small text-muted"></div>
             </div>
-            </div>
+        </div>
 
-
-            <!-- Controls -->
-            <div class="row">
-
-                <!-- Configure Model -->
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header">Configure Model</div>
-                        <div class="card-body d-flex flex-column">
-                            <div class="flex-grow-1">
-                                <!-- Transition Rules -->
-                                <div class="mb-3">
-                                    <div class="d-flex align-items-center">
-                                        <label for="rulesText" class="form-label me-2 mb-0">Transition Rules:</label>
-                                    </div>
-
-                                    <div class="position-relative d-flex border mb-0" style="height: 200px; overflow: hidden;">
-                                        <!-- Line numbers -->
-                                        <div id="lineNumbers" class="bg-light border-end text-end px-2 py-2 font-monospace" 
-                                            style="user-select: none; min-width: 1em; white-space: pre; overflow: hidden; color: #888;">
-                                        </div>
-
-                                        <!-- Textarea -->
-                                        <textarea id="rulesText" class="form-control"
-                                            style="height: 100%; overflow-x: auto; white-space: nowrap; resize: none; flex: 1;">INIT | FIND | R
+        <!-- Controls and Configuration -->
+        <div class="row mt-3">
+            <!-- Configure Model -->
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">Configure Model</div>
+                    <div class="card-body d-flex flex-column">
+                        <!-- Transition Rules -->
+                        <div class="mb-3 flex-grow-1">
+                            <label for="rulesEditor" class="form-label">Transition Rules:</label>
+                            <div id="rulesEditor">INIT | FIND | R
 FIND | FIND | R
-FIND _ HALT | R</textarea>
-                                    </div>
-                                </div>
-                                <script>
-                                    const rulesText = document.getElementById("rulesText");
-                                    const lineNumbers = document.getElementById("lineNumbers");
-                                    function updateLineNumbers() {
-                                        const lines = rulesText.value.split('\n').length;
-                                        lineNumbers.innerText = Array.from({ length: lines }, (_, i) => i + 1).join('\n');
-                                    }
+FIND _ HALT | R</div>
+                        </div>
 
-                                    rulesText.addEventListener("input", updateLineNumbers);
-                                    rulesText.addEventListener("scroll", () => {
-                                        lineNumbers.scrollTop = rulesText.scrollTop;
-                                    });
+                        <!-- Initial Tape -->
+                        <div class="mb-3">
+                            <label for="tapeInput" class="form-label">Initial Tape:</label>
+                            <input type="text" id="tapeInput" class="form-control" value="|||||||">
+                        </div>
 
-                                    // Initial call
-                                    updateLineNumbers();
-                                </script>
-
-                                <!-- Initial Tape -->
-                                <div class="mb-2">
-                                    <label for="tapeInput" class="form-label">Initial Tape:</label>
-                                    <input type="text" id="tapeInput" class="form-control" value="|||||||">
-                                </div>
+                        <!-- Action Buttons -->
+                        <div class="row g-2 mt-auto">
+                            <div class="col">
+                                <button id="resetBtn" class="btn btn-reset w-100 bi bi-arrow-clockwise"> Reset</button>
                             </div>
-                            <div class="row mt-auto g-2 pt-3">
-                                <div class="col">
-                                    <button id="resetBtn" class="btn btn-reset w-100 bi bi-arrow-clockwise">Reset</button>
-                                </div>
-                                                                <div class="col">
-                                    <button id="loadBtn" class="btn btn-load w-100 bi bi-upload"> Load</button>
-                                </div>
-
-                                <div class="col">
-                                    <button id="copyRulesBtn" class="btn btn-copy w-100 bi bi-clipboard-fill"> Copy</button>
-                                </div>
-                                <div class="col">
-                                    <button id="clearRulesBtn" class="btn btn-clear w-100 bi bi-trash-fill"> Clear</button>
-                                </div>
+                            <div class="col">
+                                <button id="loadBtn" class="btn btn-load w-100 bi bi-upload"> Load</button>
+                            </div>
+                            <div class="col">
+                                <button id="copyRulesBtn" class="btn btn-copy w-100 bi bi-clipboard-fill"> Copy</button>
+                            </div>
+                            <div class="col">
+                                <button id="clearRulesBtn" class="btn btn-clear w-100 bi bi-trash-fill"> Clear</button>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Control Machine -->
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-header">Control Machine</div>
-                        <div class="card-body d-flex flex-column">
-                            <div class="flex-grow-1">
-                                <div class="mb-4">
-                                    <div class="row align-items-center g-2">
-                                        <div class="col-4">
-                                            <label for="gotoStep" class="form-label mb-0 w-100">Go to Step:</label>
-                                        </div>
-                                        <div class="col-4">
-                                            <input type="number" id="gotoStep" class="form-control" min="0">
-                                        </div>
-                                        <div class="col-4">
-                                            <button class="btn btn-outline-primary w-100 bi bi-signpost-fill" id="gotoBtn"> Go To</button>
-                                        </div>
-                                    </div>
+            <!-- Control Machine -->
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-header">Control Machine</div>
+                    <div class="card-body d-flex flex-column">
+                        <!-- Step Navigation -->
+                        <div class="mb-3">
+                            <div class="row align-items-center g-2">
+                                <div class="col-4">
+                                    <label for="gotoStep" class="form-label mb-0">Go to Step:</label>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="stepEntry" class="form-label">Steps:</label>
-                                    <input type="number" id="stepEntry" class="form-control" value="1" min="1">
+                                <div class="col-4">
+                                    <input type="number" id="gotoStep" class="form-control" min="0">
                                 </div>
-                                <div class="mb-3">
-                                    <label for="maxSteps" class="form-label">Max Steps:</label>
-                                    <input type="number" id="maxSteps" class="form-control" value="1000000" min="1">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="delayEntry" class="form-label">Speed (ms):</label>
-                                    <input type="number" id="delayEntry" class="form-control" value="300" min="1">
+                                <div class="col-4">
+                                    <button class="btn btn-goto w-100 bi bi-signpost-fill" id="gotoBtn"> Go To</button>
                                 </div>
                             </div>
-                            <div class="row mt-auto g-2 pt-3">
+                        </div>
+
+                        <!-- Configuration Options -->
+                        <div class="mb-3">
+                            <label for="stepEntry" class="form-label">Steps:</label>
+                            <input type="number" id="stepEntry" class="form-control" value="1" min="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="maxSteps" class="form-label">Max Steps:</label>
+                            <input type="number" id="maxSteps" class="form-control" value="1000000" min="1">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="delayEntry" class="form-label">Speed (ms):</label>
+                            <input type="number" id="delayEntry" class="form-control" value="300" min="1">
+                        </div>
+
+                        <!-- Control Buttons -->
+                        <div class="row g-2 mt-auto">
                             <div class="col-4">
                                 <button id="stepBtn" class="btn btn-step w-100 action-bi bi-forward-fill"> Step</button>
                             </div>
                             <div class="col-4">
-                                <button id="runBtn" class="btn btn-run w-100 action-bi bi-play-fill">Run</button>
+                                <button id="runBtn" class="btn btn-run w-100 action-bi bi-play-fill"> Run</button>
                             </div>
                             <div class="col-4">
-                                <button id="pauseBtn" class="btn btn-pause w-100 action-btn bi bi-pause-fill" disabled>Pause</button>
-                            </div>
+                                <button id="pauseBtn" class="btn btn-pause w-100 action-btn bi bi-pause-fill" disabled> Pause</button>
                             </div>
                         </div>
-                    <!-- </div> -->
-                </div>
-            </div>
-
-            <!-- Model Results -->
-            <div class="card mt-4">
-                <div class="card-header">Model Results</div>
-                <div class="card-body">
-                    <div id="results" class="monospace"></div>
-                    <div id="resources" class="monospace mt-2"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <footer class="text-center py-3 mt-4 bg-light border-top">
-            <a href="https://github.com/abbasmoosajee07/TuringMachineSim" target="_blank"
-                title="View on GitHub" class="text-dark">
-                <i class="bi bi-github h4"></i>
-            </a>
-        </footer>
+        <!-- Model Results -->
+        <div class="card mt-3">
+            <div class="card-header">Model Results</div>
+            <div class="card-body">
+                <div id="results" class="monospace"></div>
+                <div id="resources" class="monospace mt-2"></div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Importing Javascript Code -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-            <script>
+    <footer class="text-center py-3 mt-4 bg-light border-top">
+        <a href="https://github.com/abbasmoosajee07/TuringMachineSim" target="_blank"
+            title="View on GitHub" class="text-dark">
+            <i class="bi bi-github h4"></i>
+        </a>
+    </footer>
 
-            class TuringConfig {
-                static LEFT = "L";
-                static RIGHT = "R";
-                static BLANK = "_";
+    <!-- JavaScript Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-                static INIT_STATE = "INIT";
-                static HALT_STATE = "HALT";
-                static COMMENT_PREFIX = "//";
+    <!-- Main Application Script -->
+    <script type="module">
+        // Initialize Ace Editor
+        const editor = ace.edit("rulesEditor");
+        editor.setTheme("ace/theme/chrome");
+        editor.session.setMode("ace/mode/text");
+        editor.setOptions({
+            fontSize: "14px",
+            showLineNumbers: true,
+            showGutter: true,
+            highlightActiveLine: true,
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true
+        });
 
-                static MAX_STATES = 1024;
-                static MAX_TAPE_LEN = 1048576;
-                static MAX_STATE_SIZE = 32;
-                static TRANSITION_SIZE = 710000;
+        // Make editor available globally
+        window.getRulesText = () => editor.getValue();
+        window.setRulesText = (text) => editor.setValue(text);
 
-                static getTimestamp() {
-                    return performance.now() / 1000;
-                }
+        class TuringConfig {
+            static LEFT = "L";
+            static RIGHT = "R";
+            static BLANK = "_";
 
-                static getCurrentMemoryMB() {
-                    return performance.memory ? (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) : 'N/A';
-                }
+            static INIT_STATE = "INIT";
+            static HALT_STATE = "HALT";
+            static COMMENT_PREFIX = "//";
 
-                parseTransitionRules(transitionRulesStr) {
-                    const transitionsList = [];
-                    const rawRuleList = transitionRulesStr.split("\n");
-                    for (const rawLine of rawRuleList) {
-                        const line = rawLine.trim();
-                        if (!line || line.startsWith("//")) continue;
-                        const cleanedLine = line.split("//")[0].trim();
-                        const values = cleanedLine.split(/\s+/).filter(val => val.trim());
+            static MAX_STATES = 1024;
+            static MAX_TAPE_LEN = 1048576;
+            static MAX_STATE_SIZE = 32;
+            static TRANSITION_SIZE = 710000;
 
-                        if (values.length !== 5) {
-                            throw new Error(`Invalid transition: "${cleanedLine}". Expected 5 elements, got ${values.length}`);
-                        }
+            static getTimestamp() {
+                return performance.now() / 1000;
+            }
 
-                        const [currentState, currentSymbol, newState, newSymbol, direction] = values;
-                        if (direction !== "L" && direction !== "R") {
-                            throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
-                        }
+            static getCurrentMemoryMB() {
+                return performance.memory ? (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) : 'N/A';
+            }
 
-                        for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
-                            if (symbol.length !== 1) {
-                                throw new Error(`Invalid ${label}_symbol '${symbol}'. Must be a single character.`);
-                            }
-                        }
+            parseTransitionRules(transitionRulesStr) {
+                const transitionsList = [];
+                const rawRuleList = transitionRulesStr.split("\n");
+                for (const rawLine of rawRuleList) {
+                    const line = rawLine.trim();
+                    if (!line || line.startsWith("//")) continue;
+                    const cleanedLine = line.split("//")[0].trim();
+                    const values = cleanedLine.split(/\s+/).filter(val => val.trim());
 
-                        transitionsList.push([currentState, currentSymbol, newState, newSymbol, direction]);
+                    if (values.length !== 5) {
+                        throw new Error(`Invalid transition: "${cleanedLine}". Expected 5 elements, got ${values.length}`);
                     }
 
-                    if (transitionsList.length === 0) {
-                        throw new Error("No valid transition rules found.");
+                    const [currentState, currentSymbol, newState, newSymbol, direction] = values;
+                    if (direction !== "L" && direction !== "R") {
+                        throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
                     }
 
-                    return transitionsList;
+                    for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
+                        if (symbol.length !== 1) {
+                            throw new Error(`Invalid ${label}_symbol '${symbol}'. Must be a single character.`);
+                        }
+                    }
+
+                    transitionsList.push([currentState, currentSymbol, newState, newSymbol, direction]);
+                }
+
+                if (transitionsList.length === 0) {
+                    throw new Error("No valid transition rules found.");
+                }
+
+                return transitionsList;
+            }
+        }
+
+        class MachineLogic {
+            constructor(
+                transitionsList,
+                initState = TuringConfig.INIT_STATE,
+                haltState = TuringConfig.HALT_STATE,
+                blankSymbol = TuringConfig.BLANK) {
+                this.init_state = initState;
+                this.halt_state = haltState;
+                this.blank_symbol = blankSymbol;
+
+                this.MAX_STATES = TuringConfig.MAX_STATES;
+                this.MAX_STATE_SIZE = TuringConfig.MAX_STATE_SIZE;
+
+                this.transitions_list = transitionsList;
+                this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
+
+                // Initialize Tape
+                this.head_position = 0;
+                this.current_state = initState;
+                this.tape = {};
+                this.running = true;
+                this.input_tape = "";
+            }
+
+            _validateTransition(transition) {
+                if (transition.length !== 5) {
+                    throw new Error(`Invalid transition: ${transition}. Expected 5 elements: (currentState, currentSymbol, newState, newSymbol, moveDirection).`);
+                }
+
+                const [current_state, current_symbol, new_state, new_symbol, direction] = transition;
+
+                if (direction !== TuringConfig.LEFT && direction !== TuringConfig.RIGHT) {
+                    throw new Error(`Invalid move direction: '${direction}'. Must be 'L' or 'R'.`);
+                }
+
+                for (const [symbol, label] of [[current_symbol, "current"], [new_symbol, "new"]]) {
+                    if (symbol.length !== 1) {
+                        throw new Error(`Invalid ${label}_symbol: '${symbol}'. Must be a single character.`);
+                    }
+                }
+
+                for (const [state, label] of [[current_state, "current"], [new_state, "new"]]) {
+                    if (state.length > this.MAX_STATE_SIZE) {
+                        throw new Error(`Invalid ${label}_state: ${state} size=${state.length}. State Size must be less than ${this.MAX_STATE_SIZE} characters.`);
+                    }
+                }
+
+                return transition;
+            }
+
+            _buildTransitionDict(transitionsList, initState, haltState) {
+                const transitionDict = {};
+                let hasHaltState = false;
+
+                for (const transition of transitionsList) {
+                    const [currentState, currentSymbol, newState, newSymbol, moveDirection] = this._validateTransition(transition);
+
+                    if (!transitionDict[currentState]) {
+                        transitionDict[currentState] = {};
+                    }
+
+                    if (currentSymbol in transitionDict[currentState]) {
+                        throw new Error(`Duplicate transition for state ${currentState} and symbol ${currentSymbol}`);
+                    }
+
+                    transitionDict[currentState][currentSymbol] = [newState, newSymbol, moveDirection];
+
+                    if (newState === haltState) {
+                        hasHaltState = true;
+                    }
+                }
+
+                if (Object.keys(transitionDict).length > this.MAX_STATES) {
+                    throw new Error(`Too many states: ${Object.keys(transitionDict).length}. Maximum is ${this.MAX_STATES}.`);
+                }
+
+                if (!transitionDict[initState]) {
+                    throw new Error(`Initial state ${initState} not found in the transitions`);
+                }
+
+                if (!hasHaltState) {
+                    throw new Error(`Halt state ${haltState} not found in the transitions`);
+                }
+
+                return transitionDict;
+            }
+
+            _setTape(inputTape) {
+                if (inputTape.includes(" ")) {
+                    throw new Error("Input tape must not contain spaces");
+                }
+
+                this.head_position = 0;
+                this.current_state = this.init_state;
+                this.tape = {};
+                this.input_tape = inputTape;
+
+                for (let i = 0; i < inputTape.length; i++) {
+                    const symbol = inputTape[i];
+                    if (symbol !== this.blank_symbol) {
+                        this.tape[i] = symbol;
+                    }
                 }
             }
 
-            class MachineLogic {
-                constructor(
-                    transitionsList,
-                    initState = TuringConfig.INIT_STATE,
-                    haltState = TuringConfig.HALT_STATE,
-                    blankSymbol = TuringConfig.BLANK) {
-                    this.init_state = initState;
-                    this.halt_state = haltState;
-                    this.blank_symbol = blankSymbol;
+            _getTapeBoundaries(windowSize = 5) {
+                const positions = Object.keys(this.tape).map(Number);
+                let minPos = positions.length > 0 ? Math.min(...positions) : this.head_position - windowSize;
+                let maxPos = positions.length > 0 ? Math.max(...positions) : this.head_position + windowSize;
 
-                    this.MAX_STATES = TuringConfig.MAX_STATES;
-                    this.MAX_STATE_SIZE = TuringConfig.MAX_STATE_SIZE;
+                minPos = Math.min(minPos, this.head_position) - windowSize;
+                maxPos = Math.max(maxPos, this.head_position) + windowSize;
+                return [minPos, maxPos];
+            }
 
-                    this.transitions_list = transitionsList;
-                    this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
+            _printTapeState(visualize = true) {
+                const [minPos, maxPos] = this._getTapeBoundaries();
+                const headPosInWindow = this.head_position - minPos;
 
-                    // Initialize Tape
-                    this.head_position = 0;
-                    this.current_state = initState;
-                    this.tape = {};
-                    this.running = true;
-                    this.input_tape = "";
+                let tapeStr = "";
+                for (let i = minPos; i <= maxPos; i++) {
+                    tapeStr += this.tape[i] ?? this.blank_symbol;
                 }
 
-                _validateTransition(transition) {
-                    if (transition.length !== 5) {
-                        throw new Error(`Invalid transition: ${transition}. Expected 5 elements: (currentState, currentSymbol, newState, newSymbol, moveDirection).`);
-                    }
+                const pointerStr = `${" ".repeat(headPosInWindow)}^`;
+                const tape_state = `[${this.stepCount}]: ${this.current_state}`
+                const printedState = [tapeStr, pointerStr, tape_state, ""];
 
-                    const [current_state, current_symbol, new_state, new_symbol, direction] = transition;
-
-                    if (direction !== TuringConfig.LEFT && direction !== TuringConfig.RIGHT) {
-                        throw new Error(`Invalid move direction: '${direction}'. Must be 'L' or 'R'.`);
-                    }
-
-                    for (const [symbol, label] of [[current_symbol, "current"], [new_symbol, "new"]]) {
-                        if (symbol.length !== 1) {
-                            throw new Error(`Invalid ${label}_symbol: '${symbol}'. Must be a single character.`);
-                        }
-                    }
-
-                    for (const [state, label] of [[current_state, "current"], [new_state, "new"]]) {
-                        if (state.length > this.MAX_STATE_SIZE) {
-                            throw new Error(`Invalid ${label}_state: ${state} size=${state.length}. State Size must be less than ${this.MAX_STATE_SIZE} characters.`);
-                        }
-                    }
-
-                    return transition;
+                if (visualize) {
+                    console.log(printedState.join("\n"));
                 }
 
-                _buildTransitionDict(transitionsList, initState, haltState) {
-                    const transitionDict = {};
-                    let hasHaltState = false;
+                return tapeStr.replace(new RegExp(`^${this.blank_symbol}+|${this.blank_symbol}+$`, 'g'), '');
+            }
 
-                    for (const transition of transitionsList) {
-                        const [currentState, currentSymbol, newState, newSymbol, moveDirection] = this._validateTransition(transition);
-
-                        if (!transitionDict[currentState]) {
-                            transitionDict[currentState] = {};
-                        }
-
-                        if (currentSymbol in transitionDict[currentState]) {
-                            throw new Error(`Duplicate transition for state ${currentState} and symbol ${currentSymbol}`);
-                        }
-
-                        transitionDict[currentState][currentSymbol] = [newState, newSymbol, moveDirection];
-
-                        if (newState === haltState) {
-                            hasHaltState = true;
-                        }
-                    }
-
-                    if (Object.keys(transitionDict).length > this.MAX_STATES) {
-                        throw new Error(`Too many states: ${Object.keys(transitionDict).length}. Maximum is ${this.MAX_STATES}.`);
-                    }
-
-                    if (!transitionDict[initState]) {
-                        throw new Error(`Initial state ${initState} not found in the transitions`);
-                    }
-
-                    if (!hasHaltState) {
-                        throw new Error(`Halt state ${haltState} not found in the transitions`);
-                    }
-
-                    return transitionDict;
+            _stepLogic() {
+                const stateTransitions = this.transitions_dict[this.current_state];
+                if (!stateTransitions) {
+                    throw new Error(`No transitions for state ${this.current_state} with input tape ${this.input_tape}`);
                 }
 
-                _setTape(inputTape) {
-                    if (inputTape.includes(" ")) {
-                        throw new Error("Input tape must not contain spaces");
-                    }
+                const currentSymbol = this.tape[this.head_position] ?? this.blank_symbol;
+                const transition = stateTransitions[currentSymbol];
+                if (!transition) {
+                    throw new Error(`No transition for symbol '${currentSymbol}' in state ${this.current_state} with input tape ${this.input_tape}`);
+                }
 
-                    this.head_position = 0;
-                    this.current_state = this.init_state;
-                    this.tape = {};
-                    this.input_tape = inputTape;
+                const [newState, newSymbol, moveDirection] = transition;
 
-                    for (let i = 0; i < inputTape.length; i++) {
-                        const symbol = inputTape[i];
-                        if (symbol !== this.blank_symbol) {
-                            this.tape[i] = symbol;
+                if (newSymbol === this.blank_symbol) {
+                    delete this.tape[this.head_position];
+                } else {
+                    this.tape[this.head_position] = newSymbol;
+                }
+
+                const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
+                this.current_state = newState;
+                this.head_position += shift;
+            }
+
+            runLogic(inputTape, maxSteps = 1_000_000, visualize = false) {
+                this.input_tape = inputTape;
+                this._setTape(inputTape);
+                this._printTapeState(visualize);
+
+                this.stepCount = 0;
+                let tape = "";
+                while (this.running && this.stepCount < maxSteps) {
+                    if (this.current_state === this.halt_state) {
+                        this.running = false;
+                        if (visualize) {
+                            console.log(`HALTED after ${this.stepCount} steps`);
                         }
+                        continue;
                     }
+
+                    this._stepLogic();
+                    tape = this._printTapeState(visualize);
+                    this.stepCount++;
                 }
 
-                _getTapeBoundaries(windowSize = 5) {
-                    const positions = Object.keys(this.tape).map(Number);
-                    let minPos = positions.length > 0 ? Math.min(...positions) : this.head_position - windowSize;
-                    let maxPos = positions.length > 0 ? Math.max(...positions) : this.head_position + windowSize;
+                return [tape, this.stepCount, this.transitions_list.length];
+            }
 
-                    minPos = Math.min(minPos, this.head_position) - windowSize;
-                    maxPos = Math.max(maxPos, this.head_position) + windowSize;
-                    return [minPos, maxPos];
-                }
+            async runIncrementally(inputTape, visualize = true, maxSteps = 1_000_000) {
+                console.log("Turing Machine Initialized:");
+                console.log("Enter [space] to step, number to step n times, or q to quit:\n")
+                this.stepCount = 0;
+                let tape = "";
 
-                _printTapeState(visualize = true) {
-                    const [minPos, maxPos] = this._getTapeBoundaries();
-                    const headPosInWindow = this.head_position - minPos;
+                this.input_tape = inputTape;
+                this._setTape(inputTape);
+                this._printTapeState(visualize);
 
-                    let tapeStr = "";
-                    for (let i = minPos; i <= maxPos; i++) {
-                        tapeStr += this.tape[i] ?? this.blank_symbol;
-                    }
-
-                    const pointerStr = `${" ".repeat(headPosInWindow)}^`;
-                    const tape_state = `[${this.stepCount}]: ${this.current_state}`
-                    const printedState = [tapeStr, pointerStr, tape_state, ""];
-
-                    if (visualize) {
-                        console.log(printedState.join("\n"));
-                    }
-
-                    return tapeStr.replace(new RegExp(`^${this.blank_symbol}+|${this.blank_symbol}+$`, 'g'), '');
-                }
-
-                _stepLogic() {
-                    const stateTransitions = this.transitions_dict[this.current_state];
-                    if (!stateTransitions) {
-                        throw new Error(`No transitions for state ${this.current_state} with input tape ${this.input_tape}`);
-                    }
-
-                    const currentSymbol = this.tape[this.head_position] ?? this.blank_symbol;
-                    const transition = stateTransitions[currentSymbol];
-                    if (!transition) {
-                        throw new Error(`No transition for symbol '${currentSymbol}' in state ${this.current_state} with input tape ${this.input_tape}`);
-                    }
-
-                    const [newState, newSymbol, moveDirection] = transition;
-
-                    if (newSymbol === this.blank_symbol) {
-                        delete this.tape[this.head_position];
-                    } else {
-                        this.tape[this.head_position] = newSymbol;
-                    }
-
-                    const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
-                    this.current_state = newState;
-                    this.head_position += shift;
-                }
-
-                runLogic(inputTape, maxSteps = 1_000_000, visualize = false) {
-                    this.input_tape = inputTape;
-                    this._setTape(inputTape);
-                    this._printTapeState(visualize);
-
-                    this.stepCount = 0;
-                    let tape = "";
-                    while (this.running && this.stepCount < maxSteps) {
-                        if (this.current_state === this.halt_state) {
-                            this.running = false;
-                            if (visualize) {
-                                console.log(`HALTED after ${this.stepCount} steps`);
-                            }
-                            continue;
+                while (this.running && this.stepCount < maxSteps) {
+                    if (this.current_state === this.halt_state) {
+                        this.running = false;
+                        if (visualize) {
+                            console.log(`HALTED after ${this.stepCount} steps`);
                         }
+                        break;
+                    }
+                    const key = await new Promise(resolve => {
+                        process.stdin.resume();
+                        process.stdin.setEncoding('utf8');
+                        process.stdin.once('data', data => resolve(data.trim()));
+                    });
 
+                    if (key === 'q') {
+                        console.log("Machine Stopped Manually");
+                        break;
+                    } else if (key === '' || key === ' ') {
                         this._stepLogic();
-                        tape = this._printTapeState(visualize);
                         this.stepCount++;
-                    }
-
-                    return [tape, this.stepCount, this.transitions_list.length];
-                }
-
-                async runIncrementally(inputTape, visualize = true, maxSteps = 1_000_000) {
-                    console.log("Turing Machine Initialized:");
-                    console.log("Enter [space] to step, number to step n times, or q to quit:\n")
-                    this.stepCount = 0;
-                    let tape = "";
-
-                    this.input_tape = inputTape;
-                    this._setTape(inputTape);
-                    this._printTapeState(visualize);
-
-                    while (this.running && this.stepCount < maxSteps) {
-                        if (this.current_state === this.halt_state) {
-                            this.running = false;
-                            if (visualize) {
-                                console.log(`HALTED after ${this.stepCount} steps`);
-                            }
-                            break;
-                        }
-                        const key = await new Promise(resolve => {
-                            process.stdin.resume();
-                            process.stdin.setEncoding('utf8');
-                            process.stdin.once('data', data => resolve(data.trim()));
-                        });
-
-                        if (key === 'q') {
-                            console.log("Machine Stopped Manually");
-                            break;
-                        } else if (key === '' || key === ' ') {
+                        tape = this._printTapeState(visualize);
+                    } else if (/^\d+$/.test(key)) {
+                        const stepsToRun = parseInt(key, 10);
+                        for (let i = 0; i < stepsToRun; i++) {
+                            if (this.current_state === this.halt_state || !this.running) break;
                             this._stepLogic();
                             this.stepCount++;
                             tape = this._printTapeState(visualize);
-                        } else if (/^\d+$/.test(key)) {
-                            const stepsToRun = parseInt(key, 10);
-                            for (let i = 0; i < stepsToRun; i++) {
-                                if (this.current_state === this.halt_state || !this.running) break;
-                                this._stepLogic();
-                                this.stepCount++;
-                                tape = this._printTapeState(visualize);
-                            }
-                        } else {
-                            console.log(`Unrecognized key: '${key}'`);
                         }
+                    } else {
+                        console.log(`Unrecognized key: '${key}'`);
                     }
-
-                    return [tape, this.stepCount, this.transitions_list.length];
                 }
 
+                return [tape, this.stepCount, this.transitions_list.length];
             }
 
-            class TuringSimulator_GUI {
-    constructor() {
-        this.init_time = TuringConfig.getTimestamp();
-        this.MAX_STEPS = 1000000;
-        this.BASE_STEP = 1;
-        this.DELAY = 300;
-        this.step_count = 0;
-        this.running = false;
-        this.auto_run_timeout = null;
-        this.history = [];
+        }
 
-        this.initElements();
-        this.setupEventListeners();
-        this.load();
+        class TuringSimulator_GUI {
+            constructor() {
+                this.init_time = TuringConfig.getTimestamp();
+                this.MAX_STEPS = 0;
+                this.BASE_STEP = 0;
+                this.DELAY = 0;
+                this.step_count = 0;
+                this.running = false;
+                this.auto_run_timeout = null;
+                this.history = [];
 
-    }
+                this.initElements();
+                this.setupEventListeners();
+                this.load();
 
-    initElements() {
-        this.historySlider = document.getElementById('historySlider');
-        this.gotoStep = document.getElementById('gotoStep');
-        this.gotoBtn = document.getElementById('gotoBtn');
-        this.stepState = document.getElementById('stepState');
-        this.tapeDisplay = document.getElementById('tapeDisplay');
-        this.machineStatus = document.getElementById('machineStatus');
-        this.rulesText = document.getElementById('rulesText');
-        this.tapeInput = document.getElementById('tapeInput');
-        this.stepEntry = document.getElementById('stepEntry');
-        this.maxSteps = document.getElementById('maxSteps');
-        this.delayEntry = document.getElementById('delayEntry');
-        this.loadBtn = document.getElementById('loadBtn');
-        this.resetBtn = document.getElementById('resetBtn');
-        this.copyRulesBtn = document.getElementById('copyRulesBtn');
-        this.clearRulesBtn = document.getElementById('clearRulesBtn');
-        this.stepBtn = document.getElementById('stepBtn');
-        this.runBtn = document.getElementById('runBtn');
-        this.pauseBtn = document.getElementById('pauseBtn');
-        this.results = document.getElementById('results');
-        this.resources = document.getElementById('resources');
-        this.ControlBtn = document.getElementById('ControlBtn');
-    }
-
-    setupEventListeners() {
-        // Helper function that wraps any callback with scroll-to-top behavior
-        const withScrollToTop = (callback) => {
-            return (...args) => {
-                callback(...args);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            };
-        };
-
-        // Apply to all relevant buttons
-        this.historySlider.addEventListener('input', withScrollToTop(
-            () => this.seekHistory(parseInt(this.historySlider.value))
-        ));
-
-        this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
-        this.clearRulesBtn.addEventListener('click', withScrollToTop(() => this.clearRules()));
-        this.loadBtn.addEventListener('click', withScrollToTop(() => this.load()));
-        this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
-        this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
-        this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
-        this.runBtn.addEventListener('click', withScrollToTop(() => this.run()));
-        this.pauseBtn.addEventListener('click', withScrollToTop(() => this.pause()));
-
-        this.ControlBtn.addEventListener('click', () => {
-            if (this.running) {
-                this.pause();
-            } else if (this.cpu?.current_state === this.cpu?.halt_state) {
-                this.reset();
-            } else {
-                this.run();
             }
-        });
-        this.updateControlButton('run')
-    }
 
-    updateControlButton(state) {
-        const btn = this.ControlBtn;
-        btn.className = 'control-btn'; // Reset classes
-
-        switch(state) {
-            case 'run':
-                btn.classList.add('btn-run');
-                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
-                break;
-            case 'pause':
-                btn.classList.add('btn-pause');
-                btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
-                break;
-            case 'reset':
-                btn.classList.add('btn-reset');
-                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                break;
-        }
-    }
-
-    load() {
-        try {
-            const rules = this.rulesText.value;
-            const transitions = new TuringConfig().parseTransitionRules(rules);
-            this.initial_tape = this.tapeInput.value || "||||";
-            this.init_time = TuringConfig.getTimestamp();
-            this.cpu = new MachineLogic(transitions);
-            this.cpu._setTape(this.initial_tape);
-
-            this.step_count = 0;
-            this.running = false;
-            this.updateControlButton('run');
-            this.updateMachineStatus("Machine Loaded", "text-secondary");
-            this.runBtn.disabled = false;
-            this.pauseBtn.disabled = true;
-            this.stepBtn.disabled = false;
-
-            this.history = [{
-                tape: { ...this.cpu.tape },
-                head: this.cpu.head_position,
-                state: this.cpu.current_state
-            }];
-
-            this.updateUI();
-        } catch (error) {
-            console.error("Load error:", error);
-            this.updateMachineStatus(error, "text-danger");
-            alert(`Error during load: ${error.message}`);
-        }
-    }
-
-    reset() {
-        clearTimeout(this.auto_run_timeout);
-        try {
-            if (!this.initial_tape) {
-                const status = "Initial configuration not loaded. Click 'Load' first."
-                this.updateMachineStatus(status, "text-warning")
-                alert(status);
-                return;
+            initElements() {
+                this.historySlider = document.getElementById('historySlider');
+                this.gotoStep = document.getElementById('gotoStep');
+                this.gotoBtn = document.getElementById('gotoBtn');
+                this.stepState = document.getElementById('stepState');
+                this.tapeDisplay = document.getElementById('tapeDisplay');
+                this.machineStatus = document.getElementById('machineStatus');
+                this.rulesText = document.getElementById('rulesText');
+                this.tapeInput = document.getElementById('tapeInput');
+                this.stepEntry = document.getElementById('stepEntry');
+                this.maxSteps = document.getElementById('maxSteps');
+                this.delayEntry = document.getElementById('delayEntry');
+                this.loadBtn = document.getElementById('loadBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.copyRulesBtn = document.getElementById('copyRulesBtn');
+                this.clearRulesBtn = document.getElementById('clearRulesBtn');
+                this.stepBtn = document.getElementById('stepBtn');
+                this.runBtn = document.getElementById('runBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.results = document.getElementById('results');
+                this.resources = document.getElementById('resources');
+                this.ControlBtn = document.getElementById('ControlBtn');
             }
-            this.init_time = TuringConfig.getTimestamp();
-            this.cpu._setTape(this.initial_tape);
-            this.step_count = 0;
-            this.running = false;
-            this.stepBtn.disabled = false;
-            this.runBtn.disabled = false;
-            this.updateControlButton('run');
-            this.updateMachineStatus("Machine RESET", "text-secondary");
 
-            this.history = [{
-                tape: { ...this.cpu.tape },
-                head: this.cpu.head_position,
-                state: this.cpu.current_state
-            }];
-            this.updateUI();
-        } catch (error) {
-            console.error("Reset error:", error);
-            this.updateMachineStatus(error, "text-danger");
-            alert(`Error during reset: ${error.message}`);
-        }
-    }
+            setupEventListeners() {
+                // Helper function that wraps any callback with scroll-to-top behavior
+                const withScrollToTop = (callback) => {
+                    return (...args) => {
+                        callback(...args);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    };
+                };
 
-    run() {
-        this.running = true;
-        this.stepBtn.disabled = true;
+                // Apply to all relevant buttons
+                this.historySlider.addEventListener('input', withScrollToTop(
+                    () => this.seekHistory(parseInt(this.historySlider.value))
+                ));
 
-        this.runBtn.disabled = true;
-        this.pauseBtn.disabled = false;
-        this.updateControlButton('pause');
-        this.autoStep();
-    }
+                this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
+                this.clearRulesBtn.addEventListener('click', withScrollToTop(() => this.clearRules()));
+                this.loadBtn.addEventListener('click', withScrollToTop(() => this.load()));
+                this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
+                this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
+                this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
+                this.runBtn.addEventListener('click', withScrollToTop(() => this.run()));
+                this.pauseBtn.addEventListener('click', withScrollToTop(() => this.pause()));
 
-    pause(printPause = true) {
-        if (printPause) {
-            this.updateMachineStatus(`Machine Paused after ${this.step_count} steps`, "text-warning");
-        }
-        this.running = false;
-        clearTimeout(this.auto_run_timeout);
-        this.updateControlButton('run');
-        this.runBtn.disabled = false;
-        this.pauseBtn.disabled = true;
-        this.stepBtn.disabled = false;
-    }
-
-    HALT() {
-        this.running = false;
-        this.stepBtn.disabled = true;
-        this.runBtn.disabled = true;
-        this.pauseBtn.disabled = true;
-        this.updateControlButton('reset');
-        const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
-        this.updateMachineStatus(textContent, "text-success");    // On halt
-    }
-
-    step(printStep = true) {
-        try {
-            const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
-            const max_allowed = parseInt(this.maxSteps.value) || this.MAX_STEPS;
-            if (printStep) {
-                this.updateMachineStatus(`Machine ran for ${steps_to_run} steps`, "text-primary");              // When started
+                this.ControlBtn.addEventListener('click', () => {
+                    if (this.running) {
+                        this.pause();
+                    } else if (this.cpu?.current_state === this.cpu?.halt_state) {
+                        this.reset();
+                    } else {
+                        this.run();
+                    }
+                });
+                this.updateControlButton('run')
             }
-            for (let i = 0; i < steps_to_run; i++) {
-                if (this.step_count >= max_allowed) {
-                    this.updateMachineStatus(`Max steps (${max_allowed}) reached`, "text-danger");
-                    this.pause(false);
-                    break;
-                }
-                if (this.cpu.current_state === this.cpu.halt_state) {
-                    this.HALT();
-                    break;
-                }
 
+            load() {
                 try {
-                    this.cpu._stepLogic();
-                    this.step_count++;
+                    const rules = window.getRulesText(); // Using the Ace Editor content
+                    const transitions = new TuringConfig().parseTransitionRules(rules);
+                    this.initial_tape = this.tapeInput.value || "||||";
+                    this.init_time = TuringConfig.getTimestamp();
+                    this.cpu = new MachineLogic(transitions);
+                    this.cpu._setTape(this.initial_tape);
 
-                    this.history.push({
+                    this.step_count = 0;
+                    this.running = false;
+                    this.updateControlButton('run');
+                    this.updateMachineStatus("Machine Loaded", "text-secondary");
+                    this.runBtn.disabled = false;
+                    this.pauseBtn.disabled = true;
+                    this.stepBtn.disabled = false;
+
+                    this.history = [{
                         tape: { ...this.cpu.tape },
                         head: this.cpu.head_position,
                         state: this.cpu.current_state
-                    });
+                    }];
 
                     this.updateUI();
-
                 } catch (error) {
-                    const textContent = `Machine STUCK | After ${this.step_count} steps`;
-                    this.updateMachineStatus(textContent, "text-danger");
-                    this.pause(false);
-                    throw error;
+                    console.error("Load error:", error);
+                    this.updateMachineStatus(error, "text-danger");
+                    alert(`Error during load: ${error.message}`);
                 }
             }
-        } catch (error) {
-            console.error("Step error:", error);
-            this.updateMachineStatus(error, "text-danger");
-            alert(`Error during step: ${error.message}`);
-        }
-    }
 
-    autoStep() {
-        if (!this.running) return;
-        if (this.cpu.current_state === this.cpu.halt_state) {
-            this.HALT();
-            return;
-        }
-        this.updateMachineStatus("Machine AutoRun", "text-primary");              // When started
+            reset() {
+                clearTimeout(this.auto_run_timeout);
+                try {
+                    if (!this.initial_tape) {
+                        const status = "Initial configuration not loaded. Click 'Load' first."
+                        this.updateMachineStatus(status, "text-warning")
+                        alert(status);
+                        return;
+                    }
+                    this.init_time = TuringConfig.getTimestamp();
+                    this.cpu._setTape(this.initial_tape);
+                    this.step_count = 0;
+                    this.running = false;
+                    this.stepBtn.disabled = false;
+                    this.runBtn.disabled = false;
+                    this.updateControlButton('run');
+                    this.updateMachineStatus("Machine RESET", "text-secondary");
 
-        this.step(false);
-
-        const delay = parseInt(this.delayEntry.value) || this.DELAY;
-        this.auto_run_timeout = setTimeout(() => this.autoStep(), delay);
-    }
-
-    updateUI() {
-        // Update tape display
-        this.tapeDisplay.innerHTML = "";
-
-        const positions = Object.keys(this.cpu.tape).map(Number);
-        const min_pos = positions.length > 0 ? Math.min(...positions) : 0;
-        const max_pos = positions.length > 0 ? Math.max(...positions) : 0;
-
-        // Show at least 5 cells before and after the head position
-        const start_pos = Math.min(min_pos, this.cpu.head_position) - 5;
-        const end_pos = Math.max(max_pos, this.cpu.head_position) + 5;
-
-        for (let pos = start_pos; pos <= end_pos; pos++) {
-            const cell = document.createElement('div');
-            cell.className = 'tape-cell';
-            cell.textContent = this.cpu.tape[pos] !== undefined ? this.cpu.tape[pos] : this.cpu.blank_symbol;
-            if (pos === this.cpu.head_position) {
-                cell.classList.add('active');
+                    this.history = [{
+                        tape: { ...this.cpu.tape },
+                        head: this.cpu.head_position,
+                        state: this.cpu.current_state
+                    }];
+                    this.updateUI();
+                } catch (error) {
+                    console.error("Reset error:", error);
+                    this.updateMachineStatus(error, "text-danger");
+                    alert(`Error during reset: ${error.message}`);
+                }
             }
-            this.tapeDisplay.appendChild(cell);
+
+            step(printStep = true) {
+                try {
+                    const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
+                    const max_allowed = parseInt(this.maxSteps.value) || this.MAX_STEPS;
+                    if (printStep) {
+                        this.updateMachineStatus(`Machine ran for ${steps_to_run} steps`, "text-primary");              // When started
+                    }
+                    for (let i = 0; i < steps_to_run; i++) {
+                        if (this.step_count >= max_allowed) {
+                            this.updateMachineStatus(`Max steps (${max_allowed}) reached`, "text-danger");
+                            this.pause(false);
+                            break;
+                        }
+                        if (this.cpu.current_state === this.cpu.halt_state) {
+                            this.HALT();
+                            break;
+                        }
+
+                        try {
+                            this.cpu._stepLogic();
+                            this.step_count++;
+
+                            this.history.push({
+                                tape: { ...this.cpu.tape },
+                                head: this.cpu.head_position,
+                                state: this.cpu.current_state
+                            });
+
+                            this.updateUI();
+
+                        } catch (error) {
+                            const textContent = `Machine STUCK | After ${this.step_count} steps`;
+                            this.updateMachineStatus(textContent, "text-danger");
+                            this.pause(false);
+                            throw error;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Step error:", error);
+                    this.updateMachineStatus(error, "text-danger");
+                    alert(`Error during step: ${error.message}`);
+                }
+            }
+
+            pause(printPause = true) {
+                if (printPause) {
+                    this.updateMachineStatus(`Machine Paused after ${this.step_count} steps`, "text-warning");
+                }
+                this.running = false;
+                clearTimeout(this.auto_run_timeout);
+                this.updateControlButton('run');
+                this.runBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.stepBtn.disabled = false;
+            }
+
+            HALT() {
+                this.running = false;
+                this.stepBtn.disabled = true;
+                this.runBtn.disabled = true;
+                this.pauseBtn.disabled = true;
+                this.updateControlButton('reset');
+                const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
+                this.updateMachineStatus(textContent, "text-success");    // On halt
+            }
+
+            run() {
+                this.running = true;
+                this.stepBtn.disabled = true;
+
+                this.runBtn.disabled = true;
+                this.pauseBtn.disabled = false;
+                this.updateControlButton('pause');
+                this.autoStep();
+            }
+
+            autoStep() {
+                if (!this.running) return;
+                if (this.cpu.current_state === this.cpu.halt_state) {
+                    this.HALT();
+                    return;
+                }
+                this.updateMachineStatus("Machine AutoRun", "text-primary");              // When started
+
+                this.step(false);
+
+                const delay = parseInt(this.delayEntry.value) || this.DELAY;
+                this.auto_run_timeout = setTimeout(() => this.autoStep(), delay);
+            }
+
+            seekHistory(step) {
+                step = parseInt(step);
+                if (isNaN(step)) return;
+
+                if (step < 0 || step >= this.history.length) {
+                    return;
+                }
+
+                const snapshot = this.history[step];
+                this.cpu.tape = { ...snapshot.tape };
+                this.cpu.head_position = snapshot.head;
+                this.cpu.current_state = snapshot.state;
+                this.step_count = step;
+                this.updateUI();
+            }
+
+            goToStep() {
+                const step = parseInt(this.gotoStep.value);
+                if (isNaN(step)) {
+                    alert("Please enter a valid step number");
+                    return;
+                }
+
+                if (step < 0 || step > this.history.length - 1) {
+                    alert(`Step must be between 0 and ${this.history.length - 1}`);
+                    return;
+                }
+
+                this.historySlider.value = step;
+                this.seekHistory(step);
+            }
+
+            updateUI() {
+                // Update tape display
+                this.tapeDisplay.innerHTML = "";
+
+                const positions = Object.keys(this.cpu.tape).map(Number);
+                const min_pos = positions.length > 0 ? Math.min(...positions) : 0;
+                const max_pos = positions.length > 0 ? Math.max(...positions) : 0;
+
+                // Show at least 5 cells before and after the head position
+                const start_pos = Math.min(min_pos, this.cpu.head_position) - 5;
+                const end_pos = Math.max(max_pos, this.cpu.head_position) + 5;
+
+                for (let pos = start_pos; pos <= end_pos; pos++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'tape-cell';
+                    cell.textContent = this.cpu.tape[pos] !== undefined ? this.cpu.tape[pos] : this.cpu.blank_symbol;
+                    if (pos === this.cpu.head_position) {
+                        cell.classList.add('active');
+                    }
+                    this.tapeDisplay.appendChild(cell);
+                }
+                // Scroll the active cell horizontally without affecting vertical position
+                const activeCell = this.tapeDisplay.querySelector('.active');
+                if (activeCell) {
+                    activeCell.scrollIntoView({
+                        behavior: 'auto',
+                        block: 'nearest',  // This prevents vertical scrolling
+                        inline: 'center'   // This handles horizontal scrolling
+                    });
+                }
+
+                // Restore vertical scroll position
+                window.scrollTo(0, scrollY);
+
+
+                // Update status
+                this.historySlider.max = this.history.length - 1;
+                this.historySlider.value = this.step_count;
+                this.gotoStep.value = this.step_count;
+
+                // Update step state display
+                this.updateStepState();
+
+                // Update results
+                this.updateResults();
+            }
+
+            updateResults() {
+                this.cpu.stepCount = this.step_count;
+                const final_tape = this.cpu._printTapeState();
+                const resources_used = [
+                    `    Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
+                    ` Memory used: ${TuringConfig.getCurrentMemoryMB()}MB`
+                ];
+
+                const results = [
+                    `Initial Tape: '${this.initial_tape}'`,
+                    ` Result Tape: '${final_tape}'`,
+                    ` Steps Count: ${this.step_count}`,
+                    ` Total Rules: ${this.cpu.transitions_list.length}`,
+                    ...resources_used
+                ];
+
+                this.results.innerHTML = results.join('<br>');
+
+            }
+
+            updateStepState() {
+                const step = parseInt(this.historySlider.value);
+                const prev = step > 0 ? this.history[step - 1].state : "--";
+                const curr = this.history[step].state;
+                const next = step + 1 < this.history.length ? this.history[step + 1].state : 
+                    (step === this.step_count ? "--" : "--");
+                this.stepState.innerHTML = ` Step [${step}]: ${prev} <- <span class="tape-current">${curr}</span> -> ${next}`;
+
+            }
+
+            updateControlButton(state) {
+                const btn = this.ControlBtn;
+                btn.className = 'control-btn'; // Reset classes
+
+                switch(state) {
+                    case 'run':
+                        btn.classList.add('btn-run');
+                        btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                        break;
+                    case 'pause':
+                        btn.classList.add('btn-pause');
+                        btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                        break;
+                    case 'reset':
+                        btn.classList.add('btn-reset');
+                        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                        break;
+                }
+            }
+
+            updateMachineStatus(text, colorClass = "text-primary") {
+                const statusEl = document.getElementById("machineStatus");
+                statusEl.className = `fw-bold text-center ${colorClass}`;
+                statusEl.textContent = text;
+            }
+
+            copyRules() {
+                const rules = window.getRulesText();
+
+                if (!rules.trim()) {
+                    alert("No rules to copy");
+                    return;
+                }
+
+                navigator.clipboard.writeText(rules)
+                    .then(() => alert("Transition rules copied to clipboard"))
+                    .catch(err => {
+                        console.error("Failed to copy rules:", err);
+                        alert("Failed to copy rules. Please try again.");
+                    });
+            }
+
+            clearRules() {
+                if (confirm("Are you sure you want to clear all transition rules?")) {
+                    window.setRulesText("");
+                }
+            }
         }
-        // Scroll the active cell horizontally without affecting vertical position
-        const activeCell = this.tapeDisplay.querySelector('.active');
-        if (activeCell) {
-            activeCell.scrollIntoView({
-                behavior: 'auto',
-                block: 'nearest',  // This prevents vertical scrolling
-                inline: 'center'   // This handles horizontal scrolling
-            });
-        }
-
-        // Restore vertical scroll position
-        window.scrollTo(0, scrollY);
 
 
-        // Update status
-        this.historySlider.max = this.history.length - 1;
-        this.historySlider.value = this.step_count;
-        this.gotoStep.value = this.step_count;
+        // Populate help section
+        document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
+        document.getElementById('haltStatePlaceholder').textContent = TuringConfig.HALT_STATE;
+        document.getElementById('blankSymbolPlaceholder').textContent = TuringConfig.BLANK;
+        document.getElementById('maxStatesPlaceholder').textContent = TuringConfig.MAX_STATES.toLocaleString();
+        document.getElementById('maxTapeLenPlaceholder').textContent = TuringConfig.MAX_TAPE_LEN.toLocaleString();
+        document.getElementById('maxStateSizePlaceholder').textContent = TuringConfig.MAX_STATE_SIZE;
+        document.getElementById('transitionSizePlaceholder').textContent = TuringConfig.TRANSITION_SIZE.toLocaleString();
 
-        // Update step state display
-        this.updateStepState();
-
-        // Update results
-        this.updateResults();
-    }
-
-    updateResults() {
-        this.cpu.stepCount = this.step_count;
-        const final_tape = this.cpu._printTapeState();
-        const resources_used = [
-            `Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
-            `Memory used: ${TuringConfig.getCurrentMemoryMB()}MB`
-        ];
-
-        const results = [
-            `Result Tape: '${final_tape}'`,
-            `Steps Count: ${this.step_count}`,
-            `Total Rules: ${this.cpu.transitions_list.length}`,
-            ...resources_used
-        ];
-
-        this.results.innerHTML = results.join('<br>');
-    }
-
-    seekHistory(step) {
-        step = parseInt(step);
-        if (isNaN(step)) return;
-
-        if (step < 0 || step >= this.history.length) {
-            return;
-        }
-
-        const snapshot = this.history[step];
-        this.cpu.tape = { ...snapshot.tape };
-        this.cpu.head_position = snapshot.head;
-        this.cpu.current_state = snapshot.state;
-        this.step_count = step;
-        this.updateUI();
-    }
-
-    updateStepState() {
-        const step = parseInt(this.historySlider.value);
-        const prev = step > 0 ? this.history[step - 1].state : "--";
-        const curr = this.history[step].state;
-        const next = step + 1 < this.history.length ? this.history[step + 1].state : 
-            (step === this.step_count ? "--" : "--");
-        this.stepState.innerHTML = ` Step [${step}]: ${prev} <- <span class="tape-current">${curr}</span> -> ${next}`;
-
-    }
-
-    goToStep() {
-        const step = parseInt(this.gotoStep.value);
-        if (isNaN(step)) {
-            alert("Please enter a valid step number");
-            return;
-        }
-
-        if (step < 0 || step > this.history.length - 1) {
-            alert(`Step must be between 0 and ${this.history.length - 1}`);
-            return;
-        }
-
-        this.historySlider.value = step;
-        this.seekHistory(step);
-    }
-
-    copyRules() {
-        const rules = this.rulesText.value;
-        if (!rules.trim()) {
-            alert("No rules to copy");
-            return;
-        }
-
-        navigator.clipboard.writeText(rules)
-            .then(() => alert("Transition rules copied to clipboard"))
-            .catch(err => {
-                console.error("Failed to copy rules:", err);
-                alert("Failed to copy rules. Please try again.");
-            });
-    }
-
-    clearRules() {
-        if (confirm("Are you sure you want to clear all transition rules?")) {
-            this.rulesText.value = "";
-        }
-    }
-
-    updateMachineStatus(text, colorClass = "text-primary") {
-        const statusEl = document.getElementById("machineStatus");
-        statusEl.className = `fw-bold text-center ${colorClass}`;
-        statusEl.textContent = text;
-    }
-}
-
-        </script>
-
-        <script>
-
-            // Populate the help section with values from TuringConfig
-            document.addEventListener('DOMContentLoaded', () => {
-                document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
-                document.getElementById('haltStatePlaceholder').textContent = TuringConfig.HALT_STATE;
-                document.getElementById('blankSymbolPlaceholder').textContent = TuringConfig.BLANK;
-                document.getElementById('maxStatesPlaceholder').textContent = TuringConfig.MAX_STATES.toLocaleString();
-                document.getElementById('maxTapeLenPlaceholder').textContent = TuringConfig.MAX_TAPE_LEN.toLocaleString();
-                document.getElementById('maxStateSizePlaceholder').textContent = TuringConfig.MAX_STATE_SIZE;
-                document.getElementById('transitionSizePlaceholder').textContent = TuringConfig.TRANSITION_SIZE.toLocaleString();
-
-                new TuringSimulator_GUI();
-            });
-
-        </script>
-    </body>
-
+        // Initialize GUI
+        new TuringSimulator_GUI();
+    </script>
+</body>
 </html>

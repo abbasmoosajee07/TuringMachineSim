@@ -74,3 +74,7 @@ A web-based simulator for deterministic Turing Machines that allows you to defin
 - Maximum step limit configuration
 - Tape visualization with highlighted head position
 - State transition history tracking
+
+## Dependencies
+- [Ace](https://ace.c9.io/) Code Editor for formatting
+- [Bootstrap](https://getbootstrap.com/) for Icons and UI Styling

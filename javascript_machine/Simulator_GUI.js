@@ -3,9 +3,9 @@ import { TuringConfig  } from "./TuringBrain.js";
 class TuringSimulator_GUI {
     constructor() {
         this.init_time = TuringConfig.getTimestamp();
-        this.MAX_STEPS = 1000000;
-        this.BASE_STEP = 1;
-        this.DELAY = 300;
+        this.MAX_STEPS = 0;
+        this.BASE_STEP = 0;
+        this.DELAY = 0;
         this.step_count = 0;
         this.running = false;
         this.auto_run_timeout = null;
@@ -76,29 +76,9 @@ class TuringSimulator_GUI {
         this.updateControlButton('run')
     }
 
-    updateControlButton(state) {
-        const btn = this.ControlBtn;
-        btn.className = 'control-btn'; // Reset classes
-
-        switch(state) {
-            case 'run':
-                btn.classList.add('btn-run');
-                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
-                break;
-            case 'pause':
-                btn.classList.add('btn-pause');
-                btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
-                break;
-            case 'reset':
-                btn.classList.add('btn-reset');
-                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                break;
-        }
-    }
-
     load() {
         try {
-            const rules = this.rulesText.value;
+            const rules = window.getRulesText(); // Using the Ace Editor content
             const transitions = new TuringConfig().parseTransitionRules(rules);
             this.initial_tape = this.tapeInput.value || "||||";
             this.init_time = TuringConfig.getTimestamp();
@@ -158,38 +138,6 @@ class TuringSimulator_GUI {
         }
     }
 
-    run() {
-        this.running = true;
-        this.stepBtn.disabled = true;
-
-        this.runBtn.disabled = true;
-        this.pauseBtn.disabled = false;
-        this.updateControlButton('pause');
-        this.autoStep();
-    }
-
-    pause(printPause = true) {
-        if (printPause) {
-            this.updateMachineStatus(`Machine Paused after ${this.step_count} steps`, "text-warning");
-        }
-        this.running = false;
-        clearTimeout(this.auto_run_timeout);
-        this.updateControlButton('run');
-        this.runBtn.disabled = false;
-        this.pauseBtn.disabled = true;
-        this.stepBtn.disabled = false;
-    }
-
-    HALT() {
-        this.running = false;
-        this.stepBtn.disabled = true;
-        this.runBtn.disabled = true;
-        this.pauseBtn.disabled = true;
-        this.updateControlButton('reset');
-        const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
-        this.updateMachineStatus(textContent, "text-success");    // On halt
-    }
-
     step(printStep = true) {
         try {
             const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
@@ -234,6 +182,38 @@ class TuringSimulator_GUI {
         }
     }
 
+    pause(printPause = true) {
+        if (printPause) {
+            this.updateMachineStatus(`Machine Paused after ${this.step_count} steps`, "text-warning");
+        }
+        this.running = false;
+        clearTimeout(this.auto_run_timeout);
+        this.updateControlButton('run');
+        this.runBtn.disabled = false;
+        this.pauseBtn.disabled = true;
+        this.stepBtn.disabled = false;
+    }
+
+    HALT() {
+        this.running = false;
+        this.stepBtn.disabled = true;
+        this.runBtn.disabled = true;
+        this.pauseBtn.disabled = true;
+        this.updateControlButton('reset');
+        const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
+        this.updateMachineStatus(textContent, "text-success");    // On halt
+    }
+
+    run() {
+        this.running = true;
+        this.stepBtn.disabled = true;
+
+        this.runBtn.disabled = true;
+        this.pauseBtn.disabled = false;
+        this.updateControlButton('pause');
+        this.autoStep();
+    }
+
     autoStep() {
         if (!this.running) return;
         if (this.cpu.current_state === this.cpu.halt_state) {
@@ -246,6 +226,38 @@ class TuringSimulator_GUI {
 
         const delay = parseInt(this.delayEntry.value) || this.DELAY;
         this.auto_run_timeout = setTimeout(() => this.autoStep(), delay);
+    }
+
+    seekHistory(step) {
+        step = parseInt(step);
+        if (isNaN(step)) return;
+
+        if (step < 0 || step >= this.history.length) {
+            return;
+        }
+
+        const snapshot = this.history[step];
+        this.cpu.tape = { ...snapshot.tape };
+        this.cpu.head_position = snapshot.head;
+        this.cpu.current_state = snapshot.state;
+        this.step_count = step;
+        this.updateUI();
+    }
+
+    goToStep() {
+        const step = parseInt(this.gotoStep.value);
+        if (isNaN(step)) {
+            alert("Please enter a valid step number");
+            return;
+        }
+
+        if (step < 0 || step > this.history.length - 1) {
+            alert(`Step must be between 0 and ${this.history.length - 1}`);
+            return;
+        }
+
+        this.historySlider.value = step;
+        this.seekHistory(step);
     }
 
     updateUI() {
@@ -299,34 +311,20 @@ class TuringSimulator_GUI {
         this.cpu.stepCount = this.step_count;
         const final_tape = this.cpu._printTapeState();
         const resources_used = [
-            `Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
-            `Memory used: ${TuringConfig.getCurrentMemoryMB()}MB`
+            `    Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
+            ` Memory used: ${TuringConfig.getCurrentMemoryMB()}MB`
         ];
 
         const results = [
-            `Result Tape: '${final_tape}'`,
-            `Steps Count: ${this.step_count}`,
-            `Total Rules: ${this.cpu.transitions_list.length}`,
+            `Initial Tape: '${this.initial_tape}'`,
+            ` Result Tape: '${final_tape}'`,
+            ` Steps Count: ${this.step_count}`,
+            ` Total Rules: ${this.cpu.transitions_list.length}`,
             ...resources_used
         ];
 
         this.results.innerHTML = results.join('<br>');
-    }
 
-    seekHistory(step) {
-        step = parseInt(step);
-        if (isNaN(step)) return;
-
-        if (step < 0 || step >= this.history.length) {
-            return;
-        }
-
-        const snapshot = this.history[step];
-        this.cpu.tape = { ...snapshot.tape };
-        this.cpu.head_position = snapshot.head;
-        this.cpu.current_state = snapshot.state;
-        this.step_count = step;
-        this.updateUI();
     }
 
     updateStepState() {
@@ -339,24 +337,35 @@ class TuringSimulator_GUI {
 
     }
 
-    goToStep() {
-        const step = parseInt(this.gotoStep.value);
-        if (isNaN(step)) {
-            alert("Please enter a valid step number");
-            return;
-        }
+    updateControlButton(state) {
+        const btn = this.ControlBtn;
+        btn.className = 'control-btn'; // Reset classes
 
-        if (step < 0 || step > this.history.length - 1) {
-            alert(`Step must be between 0 and ${this.history.length - 1}`);
-            return;
+        switch(state) {
+            case 'run':
+                btn.classList.add('btn-run');
+                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                break;
+            case 'pause':
+                btn.classList.add('btn-pause');
+                btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                break;
+            case 'reset':
+                btn.classList.add('btn-reset');
+                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                break;
         }
+    }
 
-        this.historySlider.value = step;
-        this.seekHistory(step);
+    updateMachineStatus(text, colorClass = "text-primary") {
+        const statusEl = document.getElementById("machineStatus");
+        statusEl.className = `fw-bold text-center ${colorClass}`;
+        statusEl.textContent = text;
     }
 
     copyRules() {
-        const rules = this.rulesText.value;
+        const rules = window.getRulesText();
+
         if (!rules.trim()) {
             alert("No rules to copy");
             return;
@@ -372,17 +381,10 @@ class TuringSimulator_GUI {
 
     clearRules() {
         if (confirm("Are you sure you want to clear all transition rules?")) {
-            this.rulesText.value = "";
+            window.setRulesText("");
         }
     }
-
-    updateMachineStatus(text, colorClass = "text-primary") {
-        const statusEl = document.getElementById("machineStatus");
-        statusEl.className = `fw-bold text-center ${colorClass}`;
-        statusEl.textContent = text;
-    }
 }
-
 
 export { TuringSimulator_GUI };
 

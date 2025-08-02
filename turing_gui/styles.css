@@ -68,8 +68,7 @@ body {
 
 .monospace,
 .rules-info,
-.step-state,
-.rulesText {
+.step-state {
     font-family: monospace;
     font-size: 0.9rem;
 }
@@ -134,61 +133,42 @@ body {
 }
 
 /* === SCROLLBAR STYLING === */
-.tape-container::-webkit-scrollbar,
-.rulesText::-webkit-scrollbar {
+.tape-container::-webkit-scrollbar{
     height: 8px;
 }
 
-.tape-container::-webkit-scrollbar-track,
-.rulesText::-webkit-scrollbar-track {
+.tape-container::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
 }
 
-.tape-container::-webkit-scrollbar-thumb,
-.rulesText::-webkit-scrollbar-thumb {
+.tape-container::-webkit-scrollbar-thumb{
     background: #888;
     border-radius: 4px;
 }
 
-.tape-container::-webkit-scrollbar-thumb:hover,
-.rulesText::-webkit-scrollbar-thumb:hover {
+.tape-container::-webkit-scrollbar-thumb:hover{
     background: #555;
 }
 
 /* === RULES TEXTAREA === */
-#rulesText:focus,
-#rulesText:hover,
-#rulesText:active {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    border-color: transparent !important;
+#rulesEditor {
+    height: 200px;
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+.ace_gutter {
+    background-color: #f8f9fa !important;
+    color: #6c757d !important;
 }
 
-#rulesText,
-#lineNumbers {
-    font-size: 0.85rem;
+.monospace {
     font-family: monospace;
-    line-height: 1.4;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
-#rulesText {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    background-color: transparent;
-    color: inherit;
-    font-size: 14px;
-}
-
-.rulesText {
-    height: 120px;
-    overflow-x: auto;
-    white-space: nowrap;
-    resize: none;
-    scrollbar-width: thin;
-}
 
 /* === STATE INDICATORS === */
 .step-state {
@@ -199,7 +179,7 @@ body {
     color: var(--primary-color);
 }
 
-#machineStatus {
+.machineStatus {
     transition: all 0.3s ease;
     font-size: 1.1rem;
 }
@@ -211,8 +191,8 @@ body {
 
 /* === INFO BUTTON === */
 .info-btn {
-  position: fixed;
-  top: 20px;
+    position: fixed;
+    top: 20px;
     right: 20px;
     width: 35px;
     height: 35px;
@@ -311,12 +291,14 @@ body {
 /* === BUTTON INTERACTIONS === */
 .btn:hover,
 .btn:focus,
-.btn:focus-visible {
+.btn:focus-visible,
+.info-btn {
     filter: brightness(var(--hover-brightness)) !important;
     transform: scale(1.05);
-
 }
-.btn:active {
+
+.btn:active,
+.info-btn {
     filter: brightness(var(--active-brightness)) !important;
     border: none !important;
 }
