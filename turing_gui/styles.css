@@ -1,6 +1,69 @@
-/* ===== Base Styles ===== */
+/* === ROOT VARIABLES === */
+:root {
+    --primary-color: #fd0d8d;
+    --primary-hover: #f381cf;
+
+    --reset-bg: #5a4cd1;
+    --load-bg: #019875;
+    --copy-bg: #0778c4;
+    --clear-bg: #c0392b;
+    --goto-bg: #4bf542;
+    --step-bg: #cf5e45;
+    --run-bg: #00b0ae;
+    --pause-bg: #ffdd48;
+
+    --hover-brightness: 1.2;
+    --active-brightness: 0.8;
+}
+
+/* === INPUT STYLING === */
+input:focus,
+input:hover {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+input.form-control:focus {
+    outline: none;
+    border-color: var(--primary-hover);
+    border-width: 1px;
+}
+
+/* === BODY BASE STYLES === */
 body {
     background-color: #f5f5f5;
+    font-size: 0.9rem;
+}
+
+/* === SLIDER (WebKit Browsers) === */
+.slider-primary::-webkit-slider-thumb {
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 50%;
+    height: 16px;
+    width: 16px;
+    margin-top: -6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.slider-primary:hover::-webkit-slider-thumb {
+    background-color: var(--primary-hover);
+    transform: scale(1.05);
+}
+
+.slider-primary::-webkit-slider-runnable-track {
+    background-color: #ddd;
+    height: 6px;
+    border-radius: 3px;
+}
+
+/* === TYPOGRAPHY === */
+.stepState {
+    font-size: 1.15rem;
+    font-weight: 300;
+    letter-spacing: 0.35px;
+    margin-top: 0.5rem;
 }
 
 .monospace,
@@ -8,22 +71,34 @@ body {
 .step-state,
 .rulesText {
     font-family: monospace;
+    font-size: 0.9rem;
 }
 
-/* ===== Card Styles ===== */
+/* === CARD STYLES === */
 .card {
     margin-bottom: 20px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== Tape Styles ===== */
+.card-header {
+    font-weight: bold;
+    font-size: 1.05rem;
+    background-color: #f9f9f9;
+    color: #333;
+    padding: 0.4rem 0.8rem;
+    border-bottom: 1px solid #dee2e6;
+    letter-spacing: 0.5px;
+}
+
+/* === TAPE STYLES === */
 .tape-wrapper {
     width: 100%;
     overflow-x: auto;
     padding: 10px 0;
     margin: 10px 0;
     background-color: #f9f9f9;
-    border-radius: 4px;
+    border-radius: 2px;
+    border: 1pt solid #ccc;
     scrollbar-width: thin;
     scrollbar-color: #888 #f1f1f1;
 }
@@ -42,22 +117,23 @@ body {
     align-items: center;
     justify-content: center;
     margin: 0 2px;
-    font-size: 18px;
+    font-size: 21px;
     background-color: white;
     flex-shrink: 0;
+    font-weight: 600; /* <- make all text bold */
 }
 
 .tape-cell.active {
-    border: 4px solid blue;
+    border: 4px solid var(--primary-color);
     font-weight: bold;
 }
 
 .tape-current {
-    color: blue;
+    color: var(--primary-color);
     font-weight: bold;
 }
 
-/* ===== Scrollbar Styles ===== */
+/* === SCROLLBAR STYLING === */
 .tape-container::-webkit-scrollbar,
 .rulesText::-webkit-scrollbar {
     height: 8px;
@@ -80,32 +156,32 @@ body {
     background: #555;
 }
 
-/* ===== UI Components ===== */
-.status-info {
-    font-weight: bold;
-    margin: 10px 0;
+/* === RULES TEXTAREA === */
+#rulesText:focus,
+#rulesText:hover,
+#rulesText:active {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
 }
 
-.btn-group {
-    margin-top: 15px;
+#rulesText,
+#lineNumbers {
+    font-size: 0.85rem;
+    font-family: monospace;
+    line-height: 1.4;
 }
 
-.info-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border-radius: 50%;
-    font-weight: bold;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+#rulesText {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background-color: transparent;
+    color: inherit;
+    font-size: 14px;
 }
 
-/* ===== Rules Editor ===== */
 .rulesText {
     height: 120px;
     overflow-x: auto;
@@ -114,11 +190,144 @@ body {
     scrollbar-width: thin;
 }
 
-/* ===== State Indicators ===== */
+/* === STATE INDICATORS === */
 .step-state {
     font-size: 1.1rem;
 }
 
 .step-index {
-    color: blue;
+    color: var(--primary-color);
+}
+
+#machineStatus {
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+/* === BUTTON GROUP === */
+.btn-group {
+    margin-top: 15px;
+}
+
+/* === INFO BUTTON === */
+.info-btn {
+  position: fixed;
+  top: 20px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 1.2rem;
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+    cursor: pointer;
+    }
+
+    .info-btn:hover {
+    background-color: var(--primary-hover);
+    transform: scale(1.05);
+    }
+
+    /* === CLOSE BUTTON === */
+    .custom-close-btn {
+    background-color: transparent;
+    border: none;
+    color: #656565;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 1.25rem;
+    transition: background-color 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-close-btn:hover {
+    background-color: #9e9999;
+    color: #000;
+    cursor: pointer;
+}
+
+/* === BUTTON ICON SPACING === */
+.btn i {
+    margin-right: 5px;
+}
+
+/* === CONTROL BUTTON === */
+.control-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    transform: scale(1.15);
+}
+
+/* === BUTTON BASE === */
+.btn {
+    display: inline-block;
+    vertical-align: middle;
+    text-align: center;
+    font-weight: 550;
+    color: black !important;
+    transition: filter 0.2s ease, background-color 0.2s ease;
+    user-select: none;
+}
+
+/* === BUTTON VARIANTS === */
+.btn-reset  { background-color: var(--reset-bg) !important; }
+.btn-load   { background-color: var(--load-bg) !important; }
+.btn-copy   { background-color: var(--copy-bg) !important; }
+.btn-clear  { background-color: var(--clear-bg) !important; }
+.btn-goto   { background-color: var(--goto-bg) !important; }
+.btn-step   { background-color: var(--step-bg) !important; }
+.btn-run    { background-color: var(--run-bg) !important; }
+.btn-pause  { background-color: var(--pause-bg) !important; }
+
+/* === BUTTON INTERACTIONS === */
+.btn:hover,
+.btn:focus,
+.btn:focus-visible {
+    filter: brightness(var(--hover-brightness)) !important;
+    transform: scale(1.05);
+
+}
+.btn:active {
+    filter: brightness(var(--active-brightness)) !important;
+    border: none !important;
+}
+
+/* === DISABLED BUTTON STATE === */
+button:disabled,
+.btn:disabled {
+    background-color: #e0e0e0 !important;
+    color: #888 !important;
+    border-color: #ccc !important;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
+    filter: none !important;
 }

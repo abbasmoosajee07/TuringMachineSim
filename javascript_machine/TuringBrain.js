@@ -19,8 +19,41 @@ class TuringConfig {
     static getCurrentMemoryMB() {
         return performance.memory ? (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) : 'N/A';
     }
-}
 
+    parseTransitionRules(transitionRulesStr) {
+        const transitionsList = [];
+        const rawRuleList = transitionRulesStr.split("\n");
+        for (const rawLine of rawRuleList) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith("//")) continue;
+            const cleanedLine = line.split("//")[0].trim();
+            const values = cleanedLine.split(/\s+/).filter(val => val.trim());
+
+            if (values.length !== 5) {
+                throw new Error(`Invalid transition: "${cleanedLine}". Expected 5 elements, got ${values.length}`);
+            }
+
+            const [currentState, currentSymbol, newState, newSymbol, direction] = values;
+            if (direction !== "L" && direction !== "R") {
+                throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
+            }
+
+            for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
+                if (symbol.length !== 1) {
+                    throw new Error(`Invalid ${label}_symbol '${symbol}'. Must be a single character.`);
+                }
+            }
+
+            transitionsList.push([currentState, currentSymbol, newState, newSymbol, direction]);
+        }
+
+        if (transitionsList.length === 0) {
+            throw new Error("No valid transition rules found.");
+        }
+
+        return transitionsList;
+    }
+}
 
 class MachineLogic {
     constructor(
@@ -147,7 +180,8 @@ class MachineLogic {
         }
 
         const pointerStr = `${" ".repeat(headPosInWindow)}^`;
-        const printedState = [tapeStr, pointerStr, this.current_state, ""];
+        const tape_state = `[${this.stepCount}]: ${this.current_state}`
+        const printedState = [tapeStr, pointerStr, tape_state, ""];
 
         if (visualize) {
             console.log(printedState.join("\n"));
@@ -181,48 +215,48 @@ class MachineLogic {
         this.head_position += shift;
     }
 
-    runLogic(inputTape, maxSteps = 1000000, visualize = false) {
+    runLogic(inputTape, maxSteps = 1_000_000, visualize = false) {
         this.input_tape = inputTape;
         this._setTape(inputTape);
         this._printTapeState(visualize);
 
-        let stepCount = 0;
+        this.stepCount = 0;
         let tape = "";
-        while (this.running && stepCount < maxSteps) {
+        while (this.running && this.stepCount < maxSteps) {
             if (this.current_state === this.halt_state) {
                 this.running = false;
                 if (visualize) {
-                    console.log(`HALTED after ${stepCount} steps`);
+                    console.log(`HALTED after ${this.stepCount} steps`);
                 }
                 continue;
             }
 
             this._stepLogic();
             tape = this._printTapeState(visualize);
-            stepCount++;
+            this.stepCount++;
         }
 
-        return [tape, stepCount, this.transitions_list.length];
+        return [tape, this.stepCount, this.transitions_list.length];
     }
 
-    async runStep(inputTape, visualize = true, maxSteps = 1000000) {
+    async runIncrementally(inputTape, visualize = true, maxSteps = 1_000_000) {
         console.log("Turing Machine Initialized:");
+        console.log("Enter [space] to step, number to step n times, or q to quit:\n")
+        this.stepCount = 0;
+        let tape = "";
+
         this.input_tape = inputTape;
         this._setTape(inputTape);
         this._printTapeState(visualize);
 
-        let stepCount = 0;
-        let tape = "";
-
-        while (this.running && stepCount < maxSteps) {
+        while (this.running && this.stepCount < maxSteps) {
             if (this.current_state === this.halt_state) {
                 this.running = false;
                 if (visualize) {
-                    console.log(`HALTED after ${stepCount} steps`);
+                    console.log(`HALTED after ${this.stepCount} steps`);
                 }
                 break;
             }
-
             const key = await new Promise(resolve => {
                 process.stdin.resume();
                 process.stdin.setEncoding('utf8');
@@ -234,14 +268,14 @@ class MachineLogic {
                 break;
             } else if (key === '' || key === ' ') {
                 this._stepLogic();
-                stepCount++;
+                this.stepCount++;
                 tape = this._printTapeState(visualize);
-            } else if (/^\d$/.test(key)) {
+            } else if (/^\d+$/.test(key)) {
                 const stepsToRun = parseInt(key, 10);
                 for (let i = 0; i < stepsToRun; i++) {
                     if (this.current_state === this.halt_state || !this.running) break;
                     this._stepLogic();
-                    stepCount++;
+                    this.stepCount++;
                     tape = this._printTapeState(visualize);
                 }
             } else {
@@ -249,8 +283,9 @@ class MachineLogic {
             }
         }
 
-        return [tape, stepCount, this.transitions_list.length];
+        return [tape, this.stepCount, this.transitions_list.length];
     }
+
 }
 
 export { TuringConfig, MachineLogic };

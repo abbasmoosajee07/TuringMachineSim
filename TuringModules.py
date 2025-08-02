@@ -20,7 +20,7 @@ if __name__ == "__main__":
         FIND _ HALT | R
     """.strip()
 
-    init_tape = ""
+    init_tape = "|||"
 
     # Run headless machine (console-only)
     _, basic_results, basic_resources = TuringMachine(init_rules).run_machine(

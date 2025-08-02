@@ -1,3 +1,5 @@
+import { TuringConfig  } from "./TuringBrain.js";
+
 class TuringSimulator_GUI {
     constructor() {
         this.init_time = TuringConfig.getTimestamp();
@@ -12,6 +14,7 @@ class TuringSimulator_GUI {
         this.initElements();
         this.setupEventListeners();
         this.load();
+
     }
 
     initElements() {
@@ -35,58 +38,68 @@ class TuringSimulator_GUI {
         this.pauseBtn = document.getElementById('pauseBtn');
         this.results = document.getElementById('results');
         this.resources = document.getElementById('resources');
+        this.ControlBtn = document.getElementById('ControlBtn');
     }
 
     setupEventListeners() {
-        this.historySlider.addEventListener('input', () => this.seekHistory(parseInt(this.historySlider.value)));
-        this.gotoBtn.addEventListener('click', () => this.goToStep());
-        this.loadBtn.addEventListener('click', () => this.load());
-        this.resetBtn.addEventListener('click', () => this.reset());
-        this.copyRulesBtn.addEventListener('click', () => this.copyRules());
-        this.clearRulesBtn.addEventListener('click', () => this.clearRules());
-        this.stepBtn.addEventListener('click', () => this.step());
-        this.runBtn.addEventListener('click', () => this.run());
-        this.pauseBtn.addEventListener('click', () => this.pause());
+        // Helper function that wraps any callback with scroll-to-top behavior
+        const withScrollToTop = (callback) => {
+            return (...args) => {
+                callback(...args);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+        };
+
+        // Apply to all relevant buttons
+        this.historySlider.addEventListener('input', withScrollToTop(
+            () => this.seekHistory(parseInt(this.historySlider.value))
+        ));
+
+        this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
+        this.clearRulesBtn.addEventListener('click', withScrollToTop(() => this.clearRules()));
+        this.loadBtn.addEventListener('click', withScrollToTop(() => this.load()));
+        this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
+        this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
+        this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
+        this.runBtn.addEventListener('click', withScrollToTop(() => this.run()));
+        this.pauseBtn.addEventListener('click', withScrollToTop(() => this.pause()));
+
+        this.ControlBtn.addEventListener('click', () => {
+            if (this.running) {
+                this.pause();
+            } else if (this.cpu?.current_state === this.cpu?.halt_state) {
+                this.reset();
+            } else {
+                this.run();
+            }
+        });
+        this.updateControlButton('run')
     }
 
-    parseTransitionRules(transitionRulesStr) {
-        const transitionsList = [];
-        const rawRuleList = transitionRulesStr.split("\n");
-        for (const rawLine of rawRuleList) {
-            const line = rawLine.trim();
-            if (!line || line.startsWith("//")) continue;
-            const cleanedLine = line.split("//")[0].trim();
-            const values = cleanedLine.split(/\s+/).filter(val => val.trim());
+    updateControlButton(state) {
+        const btn = this.ControlBtn;
+        btn.className = 'control-btn'; // Reset classes
 
-            if (values.length !== 5) {
-                throw new Error(`Invalid transition: "${cleanedLine}". Expected 5 elements, got ${values.length}`);
-            }
-
-            const [currentState, currentSymbol, newState, newSymbol, direction] = values;
-            if (direction !== "L" && direction !== "R") {
-                throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
-            }
-
-            for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
-                if (symbol.length !== 1) {
-                    throw new Error(`Invalid ${label}_symbol '${symbol}'. Must be a single character.`);
-                }
-            }
-
-            transitionsList.push([currentState, currentSymbol, newState, newSymbol, direction]);
+        switch(state) {
+            case 'run':
+                btn.classList.add('btn-run');
+                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                break;
+            case 'pause':
+                btn.classList.add('btn-pause');
+                btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                break;
+            case 'reset':
+                btn.classList.add('btn-reset');
+                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                break;
         }
-
-        if (transitionsList.length === 0) {
-            throw new Error("No valid transition rules found.");
-        }
-
-        return transitionsList;
     }
 
     load() {
         try {
             const rules = this.rulesText.value;
-            const transitions = this.parseTransitionRules(rules);
+            const transitions = new TuringConfig().parseTransitionRules(rules);
             this.initial_tape = this.tapeInput.value || "||||";
             this.init_time = TuringConfig.getTimestamp();
             this.cpu = new MachineLogic(transitions);
@@ -94,7 +107,11 @@ class TuringSimulator_GUI {
 
             this.step_count = 0;
             this.running = false;
-            this.machineStatus.textContent = "";
+            this.updateControlButton('run');
+            this.updateMachineStatus("Machine Loaded", "text-secondary");
+            this.runBtn.disabled = false;
+            this.pauseBtn.disabled = true;
+            this.stepBtn.disabled = false;
 
             this.history = [{
                 tape: { ...this.cpu.tape },
@@ -105,6 +122,7 @@ class TuringSimulator_GUI {
             this.updateUI();
         } catch (error) {
             console.error("Load error:", error);
+            this.updateMachineStatus(error, "text-danger");
             alert(`Error during load: ${error.message}`);
         }
     }
@@ -113,14 +131,19 @@ class TuringSimulator_GUI {
         clearTimeout(this.auto_run_timeout);
         try {
             if (!this.initial_tape) {
-                alert("Initial configuration not loaded. Click 'Load' first.");
+                const status = "Initial configuration not loaded. Click 'Load' first."
+                this.updateMachineStatus(status, "text-warning")
+                alert(status);
                 return;
             }
             this.init_time = TuringConfig.getTimestamp();
             this.cpu._setTape(this.initial_tape);
             this.step_count = 0;
             this.running = false;
-            this.machineStatus.textContent = "";
+            this.stepBtn.disabled = false;
+            this.runBtn.disabled = false;
+            this.updateControlButton('run');
+            this.updateMachineStatus("Machine RESET", "text-secondary");
 
             this.history = [{
                 tape: { ...this.cpu.tape },
@@ -130,62 +153,83 @@ class TuringSimulator_GUI {
             this.updateUI();
         } catch (error) {
             console.error("Reset error:", error);
+            this.updateMachineStatus(error, "text-danger");
             alert(`Error during reset: ${error.message}`);
         }
     }
 
     run() {
         this.running = true;
+        this.stepBtn.disabled = true;
+
         this.runBtn.disabled = true;
         this.pauseBtn.disabled = false;
+        this.updateControlButton('pause');
         this.autoStep();
     }
 
-    pause() {
+    pause(printPause = true) {
+        if (printPause) {
+            this.updateMachineStatus(`Machine Paused after ${this.step_count} steps`, "text-warning");
+        }
         this.running = false;
         clearTimeout(this.auto_run_timeout);
+        this.updateControlButton('run');
         this.runBtn.disabled = false;
         this.pauseBtn.disabled = true;
+        this.stepBtn.disabled = false;
     }
 
-    step() {
+    HALT() {
+        this.running = false;
+        this.stepBtn.disabled = true;
+        this.runBtn.disabled = true;
+        this.pauseBtn.disabled = true;
+        this.updateControlButton('reset');
+        const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
+        this.updateMachineStatus(textContent, "text-success");    // On halt
+    }
+
+    step(printStep = true) {
         try {
             const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
             const max_allowed = parseInt(this.maxSteps.value) || this.MAX_STEPS;
-
+            if (printStep) {
+                this.updateMachineStatus(`Machine ran for ${steps_to_run} steps`, "text-primary");              // When started
+            }
             for (let i = 0; i < steps_to_run; i++) {
                 if (this.step_count >= max_allowed) {
-                    this.machineStatus.textContent = `Max steps (${max_allowed}) reached`;
-                    this.pause();
+                    this.updateMachineStatus(`Max steps (${max_allowed}) reached`, "text-danger");
+                    this.pause(false);
                     break;
                 }
-
                 if (this.cpu.current_state === this.cpu.halt_state) {
-                    this.machineStatus.textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
-                    this.pause();
+                    this.HALT();
                     break;
                 }
 
                 try {
                     this.cpu._stepLogic();
                     this.step_count++;
-                    
+
                     this.history.push({
                         tape: { ...this.cpu.tape },
                         head: this.cpu.head_position,
                         state: this.cpu.current_state
                     });
-                    
+
                     this.updateUI();
-                    
+
                 } catch (error) {
-                    this.machineStatus.textContent = `Machine STUCK | After ${this.step_count} steps`;
-                    this.pause();
+                    const textContent = `Machine STUCK | After ${this.step_count} steps`;
+                    this.updateMachineStatus(textContent, "text-danger");
+                    this.pause(false);
                     throw error;
                 }
             }
         } catch (error) {
             console.error("Step error:", error);
+            this.updateMachineStatus(error, "text-danger");
             alert(`Error during step: ${error.message}`);
         }
     }
@@ -193,12 +237,12 @@ class TuringSimulator_GUI {
     autoStep() {
         if (!this.running) return;
         if (this.cpu.current_state === this.cpu.halt_state) {
-            this.machineStatus.textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
-            this.pause();
+            this.HALT();
             return;
         }
+        this.updateMachineStatus("Machine AutoRun", "text-primary");              // When started
 
-        this.step();
+        this.step(false);
 
         const delay = parseInt(this.delayEntry.value) || this.DELAY;
         this.auto_run_timeout = setTimeout(() => this.autoStep(), delay);
@@ -225,30 +269,34 @@ class TuringSimulator_GUI {
             }
             this.tapeDisplay.appendChild(cell);
         }
-        
-        // Center the active cell
+        // Scroll the active cell horizontally without affecting vertical position
         const activeCell = this.tapeDisplay.querySelector('.active');
         if (activeCell) {
             activeCell.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-                inline: 'center'
+                behavior: 'auto',
+                block: 'nearest',  // This prevents vertical scrolling
+                inline: 'center'   // This handles horizontal scrolling
             });
         }
-        
+
+        // Restore vertical scroll position
+        window.scrollTo(0, scrollY);
+
+
         // Update status
         this.historySlider.max = this.history.length - 1;
         this.historySlider.value = this.step_count;
         this.gotoStep.value = this.step_count;
-        
+
         // Update step state display
         this.updateStepState();
-        
+
         // Update results
         this.updateResults();
     }
 
     updateResults() {
+        this.cpu.stepCount = this.step_count;
         const final_tape = this.cpu._printTapeState();
         const resources_used = [
             `Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
@@ -327,6 +375,14 @@ class TuringSimulator_GUI {
             this.rulesText.value = "";
         }
     }
+
+    updateMachineStatus(text, colorClass = "text-primary") {
+        const statusEl = document.getElementById("machineStatus");
+        statusEl.className = `fw-bold text-center ${colorClass}`;
+        statusEl.textContent = text;
+    }
 }
 
+
 export { TuringSimulator_GUI };
+
