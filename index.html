@@ -12,56 +12,7 @@
 </head>
     <body>
         <!-- Control button -->
-        <button id="ControlBtn" class="control-btn bi bi-play-fill">Run</button>
-
-        <!-- Info button -->
-        <button class="btn btn-info info-btn fs-3 bi bi-question-lg" data-bs-toggle="modal" data-bs-target="#infoModal"></button>
-
-        <!-- Info Modal -->
-        <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true"
-            data-bs-backdrop="static" data-bs-keyboard="false">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h6 class="modal-title" id="infoModalLabel">Turing Machine Help</h6>
-                        <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
-                            <i class="bi bi-x-lg"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <h5>🧠 Turing Machine Simulator Help</h5>
-                        <p>This simulator visualizes the execution of a deterministic Turing Machine.
-                        You can define custom rules, input tape values, and run the machine step-by-step or continuously.</p>
-                        
-                        <h5>📘 TRANSITION RULE FORMAT:</h5>
-                        <span class="code">
-                            currentState currentSymbol newState newSymbol moveDirection
-                            Example: INIT 0 INIT 0 R
-                        </span>
-                        
-                        <h6>🔧 BASIC SETUP:</h6>
-                        <div class="small">
-                            <ul>
-                                <li>Blank Symbol: '<span id="blankSymbolPlaceholder"></span>'</li>
-                                <li>Initial State: '<span id="initStatePlaceholder"></span>'</li>
-                                <li>Halt State: '<span id="haltStatePlaceholder"></span>'</li>
-                                <li>Move Directions: 'L' (left) | 'R' (right)</li>
-                            </ul>
-                        </div>
-
-                        <h6>🚦 MACHINE LIMITS:</h6>
-                        <div class="small">
-                            <ul>
-                                <li>MAX STATES: <span id="maxStatesPlaceholder"></span></li>
-                                <li>MAX TAPE LEN: <span id="maxTapeLenPlaceholder"></span></li>
-                                <li>MAX STATE SIZE: <span id="maxStateSizePlaceholder"></span> characters</li>
-                                <li>TRANSITION SIZE: <span id="transitionSizePlaceholder"></span> rules</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <button id="ControlBtn" class="control-btn bi bi-play-fill"></button>
 
         <!-- Main GUI-->
         <div class="container mt-4">
@@ -80,7 +31,7 @@
 
                     <!-- Machine Status -->
                     <div class="mb-2">
-                        <div id="machineStatus" class="text-danger fw-bold text-center"></div>
+                        <div id="machineStatus" class="text-machineStatus fw-bold text-center"></div>
                     </div>
 
                     <!-- History Slider and Step Info -->
@@ -94,16 +45,18 @@
             </div>
 
             <!-- Controls and Configuration -->
-            <div class="row mt-3">
+            <div class="row mt-3 align-items-stretch"> <!-- 🔧 align items vertically -->
+
                 <!-- Configure Model -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-8 mb-2">
                     <div class="card h-100">
                         <div class="card-header">Configure Model</div>
-                        <div class="card-body d-flex flex-column">
+                        <div class="card-body">
+
                             <!-- Transition Rules -->
                             <div class="mb-3 flex-grow-1">
                                 <label for="rulesEditor" class="form-label">Transition Rules:</label>
-                                <div id="rulesEditor">INIT | FIND | R
+                                <div id="rulesEditor" class="form-control h-100" style="min-height: 250px; white-space: pre-wrap;">INIT | FIND | R
 FIND | FIND | R
 FIND _ HALT | R</div>
                             </div>
@@ -115,18 +68,19 @@ FIND _ HALT | R</div>
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="row g-2 mt-auto">
-                                <div class="col">
-                                    <button id="resetBtn" class="btn btn-reset w-100 bi bi-arrow-clockwise"> Reset</button>
+                            <div class="row mb-0 g-2 mt-auto"> <!-- 🔧 push to bottom -->
+                                <div class="col-3">
+                                    <button id="clearRulesBtn" class="btn btn-clear w-100 action-btn bi bi-trash-fill"> Clear</button>
                                 </div>
-                                <div class="col">
-                                    <button id="loadBtn" class="btn btn-load w-100 bi bi-upload"> Load</button>
+                                <div class="col-3">
+                                    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                                    <button id="uploadBtn" class="btn btn-upload w-100 action-btn bi bi-file-earmark-arrow-up"> Upload</button>
                                 </div>
-                                <div class="col">
-                                    <button id="copyRulesBtn" class="btn btn-copy w-100 bi bi-clipboard-fill"> Copy</button>
+                                <div class="col-3">
+                                    <button id="copyRulesBtn" class="btn btn-copy w-100 action-btn bi bi-clipboard-fill"> Copy</button>
                                 </div>
-                                <div class="col">
-                                    <button id="clearRulesBtn" class="btn btn-clear w-100 bi bi-trash-fill"> Clear</button>
+                                <div class="col-3">
+                                    <button id="loadBtn" class="btn btn-load w-100 action-btn bi bi-upload"> Load</button>
                                 </div>
                             </div>
                         </div>
@@ -134,51 +88,52 @@ FIND _ HALT | R</div>
                 </div>
 
                 <!-- Control Machine -->
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-2">
                     <div class="card h-100">
                         <div class="card-header">Control Machine</div>
-                        <div class="card-body d-flex flex-column">
+                        <div class="card-body d-flex flex-column"> <!-- 🔧 flex column -->
+
                             <!-- Step Navigation -->
                             <div class="mb-3">
                                 <div class="row align-items-center g-2">
                                     <div class="col-4">
-                                        <label for="gotoStep" class="form-label mb-0">Go to Step:</label>
+                                        <label for="gotoStep" class="form-label mb-0 w-100">Seek Step:</label>
                                     </div>
                                     <div class="col-4">
-                                        <input type="number" id="gotoStep" class="form-control" min="0">
+                                        <input type="number" id="gotoStep" class="form-control" min="0" title="Seek specific step in history">
                                     </div>
                                     <div class="col-4">
-                                        <button class="btn btn-goto w-100 bi bi-signpost-fill" id="gotoBtn"> Go To</button>
+                                        <button class="btn btn-goto w-100 action-btn bi bi-signpost-fill" id="gotoBtn">Seek</button>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Configuration Options -->
                             <div class="mb-3">
-                                <label for="stepEntry" class="form-label">Steps:</label>
-                                <input type="number" id="stepEntry" class="form-control" value="1" min="1">
+                                <label for="stepEntry" class="form-label">Jump Steps:</label>
+                                <input type="number" id="stepEntry" class="form-control" value="1" min="1" title="Steps per jump">
                             </div>
 
                             <div class="mb-3">
                                 <label for="maxSteps" class="form-label">Max Steps:</label>
-                                <input type="number" id="maxSteps" class="form-control" value="1000000" min="1">
+                                <input type="number" id="maxSteps" class="form-control" value="1000000" min="1" title="Max steps">
                             </div>
 
                             <div class="mb-3">
                                 <label for="delayEntry" class="form-label">Speed (ms):</label>
-                                <input type="number" id="delayEntry" class="form-control" value="300" min="1">
+                                <input type="number" id="delayEntry" class="form-control" value="300" min="1" title="Step delay (ms)">
                             </div>
 
                             <!-- Control Buttons -->
-                            <div class="row g-2 mt-auto">
+                            <div class="row mb-3 g-2 mt-auto"> <!-- 🔧 align bottom -->
                                 <div class="col-4">
-                                    <button id="stepBtn" class="btn btn-step w-100 action-bi bi-forward-fill"> Step</button>
+                                    <button id="stepBtn" class="btn btn-step w-100 action-btn bi bi-forward-fill">Jump</button>
                                 </div>
                                 <div class="col-4">
-                                    <button id="runBtn" class="btn btn-run w-100 action-bi bi-play-fill"> Run</button>
+                                    <button id="RunPauseBtn" class="btn btn-runpause w-100 action-btn bi bi-play-fill">Play</button>
                                 </div>
                                 <div class="col-4">
-                                    <button id="pauseBtn" class="btn btn-pause w-100 action-btn bi bi-pause-fill" disabled> Pause</button>
+                                    <button id="resetBtn" class="btn btn-reset w-100 action-btn bi bi-arrow-clockwise">Reset</button>
                                 </div>
                             </div>
                         </div>
@@ -193,6 +148,40 @@ FIND _ HALT | R</div>
                     <div id="results" class="monospace"></div>
                     <div id="resources" class="monospace mt-2"></div>
                 </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card mt-3" id="helpCard">
+            <div class="card-header">
+                🧠 Turing Machine Help
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Simulator Overview</h5>
+                <p class="card-text">
+                This simulator visualizes the execution of a deterministic Turing Machine.
+                You can define custom rules, input tape values, and run the machine step-by-step or continuously.
+                </p>
+
+                <h5>📘 TRANSITION RULE FORMAT</h5>
+                <pre class="bg-light p-2 rounded"><code>[currentState] [currentSymbol] [newState] [newSymbol] [moveDirection]
+Example: INIT 0 INIT 0 R</code></pre>
+
+                <h6>🔧 BASIC SETUP</h6>
+                <ul class="small">
+                <li>Blank Symbol: '<span id="blankSymbolPlaceholder"></span>'</li>
+                <li>Initial State: '<span id="initStatePlaceholder"></span>'</li>
+                <li>Halt State: '<span id="haltStatePlaceholder"></span>'</li>
+                <li>Move Directions: 'L' (left) | 'R' (right)</li>
+                </ul>
+
+                <h6>🚦 MACHINE LIMITS</h6>
+                <ul class="small">
+                <li>MAX STATES: <span id="maxStatesPlaceholder"></span></li>
+                <li>MAX TAPE LEN: <span id="maxTapeLenPlaceholder"></span></li>
+                <li>MAX STATE SIZE: <span id="maxStateSizePlaceholder"></span> characters</li>
+                <li>TRANSITION SIZE: <span id="transitionSizePlaceholder"></span> rules</li>
+                </ul>
+            </div>
             </div>
         </div>
 
@@ -234,6 +223,9 @@ FIND _ HALT | R</div>
             window.getRulesText = () => editor.getValue();
             window.setRulesText = (text) => editor.setValue(text);
 
+            // Initialize GU
+            new TuringSimulator_GUI();
+
             // Populate help section
             document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
             document.getElementById('haltStatePlaceholder').textContent = TuringConfig.HALT_STATE;
@@ -243,8 +235,6 @@ FIND _ HALT | R</div>
             document.getElementById('maxStateSizePlaceholder').textContent = TuringConfig.MAX_STATE_SIZE;
             document.getElementById('transitionSizePlaceholder').textContent = TuringConfig.TRANSITION_SIZE.toLocaleString();
 
-            // Initialize GUI
-            new TuringSimulator_GUI();
         </script>
 
     </body>

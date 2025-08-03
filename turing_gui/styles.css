@@ -1,19 +1,20 @@
 /* === ROOT VARIABLES === */
 :root {
     --primary-color: #fd0d8d;
-    --primary-hover: #f381cf;
+    --primary-hover: #e08fc3;
 
-    --reset-bg: #5a4cd1;
-    --load-bg: #019875;
-    --copy-bg: #0778c4;
-    --clear-bg: #c0392b;
-    --goto-bg: #4bf542;
-    --step-bg: #cf5e45;
-    --run-bg: #00b0ae;
-    --pause-bg: #ffdd48;
+    --reset-bg: #b94734;      /* Softened burnt red */
+    --load-bg: #2b9d84;       /* Muted teal */
+    --copy-bg: #357ab7;       /* Calmer blue */
+    --clear-bg: #b63b2e;      /* Brick red */
+    --goto-bg: #48b04f;       /* Earthy green */
+    --step-bg: #5c5dbb;       /* Dusty indigo */
+    --run-bg: #00979c;        /* Slightly dimmed cyan */
+    --pause-bg: #e6c94c;      /* Muted golden yellow */
+    --upload-bg: #c04fb9;     /* Dusty magenta */
 
-    --hover-brightness: 1.2;
-    --active-brightness: 0.8;
+    --hover-brightness: 1.25;
+    --active-brightness: 0.85;
 }
 
 /* === INPUT STYLING === */
@@ -169,7 +170,6 @@ body {
     word-break: break-word;
 }
 
-
 /* === STATE INDICATORS === */
 .step-state {
     font-size: 1.1rem;
@@ -181,7 +181,7 @@ body {
 
 .machineStatus {
     transition: all 0.3s ease;
-    font-size: 1.1rem;
+    font-size: 1.5rem !important;
 }
 
 /* === BUTTON GROUP === */
@@ -189,56 +189,6 @@ body {
     margin-top: 15px;
 }
 
-/* === INFO BUTTON === */
-.info-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 35px;
-    height: 35px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 1.2rem;
-    background-color: var(--primary-color);
-    color: white;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s, transform 0.2s;
-    cursor: pointer;
-    }
-
-    .info-btn:hover {
-    background-color: var(--primary-hover);
-    transform: scale(1.05);
-    }
-
-    /* === CLOSE BUTTON === */
-    .custom-close-btn {
-    background-color: transparent;
-    border: none;
-    color: #656565;
-    width: 30px;
-    height: 30px;
-    padding: 0;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 1.25rem;
-    transition: background-color 0.2s, color 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.custom-close-btn:hover {
-    background-color: #9e9999;
-    color: #000;
-    cursor: pointer;
-}
 
 /* === BUTTON ICON SPACING === */
 .btn i {
@@ -250,10 +200,10 @@ body {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: 35px;
-    height: 35px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 1.75rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     z-index: 2000;
     display: flex;
@@ -275,7 +225,12 @@ body {
     font-weight: 550;
     color: black !important;
     transition: filter 0.2s ease, background-color 0.2s ease;
+    color: black !important;
+    transition: filter 0.2s ease, background-color 0.2s ease;
     user-select: none;
+
+    white-space: normal !important;
+    word-break: break-word;
 }
 
 /* === BUTTON VARIANTS === */
@@ -287,6 +242,8 @@ body {
 .btn-step   { background-color: var(--step-bg) !important; }
 .btn-run    { background-color: var(--run-bg) !important; }
 .btn-pause  { background-color: var(--pause-bg) !important; }
+.btn-upload  { background-color: var(--upload-bg) !important; }
+
 
 /* === BUTTON INTERACTIONS === */
 .btn:hover,

@@ -14,35 +14,34 @@ class TuringSimulator_GUI {
         this.initElements();
         this.setupEventListeners();
         this.load();
-
     }
 
     initElements() {
-        this.historySlider = document.getElementById('historySlider');
-        this.gotoStep = document.getElementById('gotoStep');
         this.gotoBtn = document.getElementById('gotoBtn');
-        this.stepState = document.getElementById('stepState');
-        this.tapeDisplay = document.getElementById('tapeDisplay');
-        this.machineStatus = document.getElementById('machineStatus');
-        this.rulesText = document.getElementById('rulesText');
-        this.tapeInput = document.getElementById('tapeInput');
-        this.stepEntry = document.getElementById('stepEntry');
-        this.maxSteps = document.getElementById('maxSteps');
-        this.delayEntry = document.getElementById('delayEntry');
         this.loadBtn = document.getElementById('loadBtn');
+        this.maxSteps = document.getElementById('maxSteps');
         this.resetBtn = document.getElementById('resetBtn');
+        this.gotoStep = document.getElementById('gotoStep');
+        this.stepEntry = document.getElementById('stepEntry');
+        this.tapeInput = document.getElementById('tapeInput');
+        this.rulesText = document.getElementById('rulesText');
+        this.stepState = document.getElementById('stepState');
+        this.delayEntry = document.getElementById('delayEntry');
+        this.tapeDisplay = document.getElementById('tapeDisplay');
+        this.RunPauseBtn = document.getElementById('RunPauseBtn');
         this.copyRulesBtn = document.getElementById('copyRulesBtn');
+        this.historySlider = document.getElementById('historySlider');
+        this.machineStatus = document.getElementById('machineStatus');
         this.clearRulesBtn = document.getElementById('clearRulesBtn');
         this.stepBtn = document.getElementById('stepBtn');
-        this.runBtn = document.getElementById('runBtn');
-        this.pauseBtn = document.getElementById('pauseBtn');
         this.results = document.getElementById('results');
+        this.uploadBtn = document.getElementById('uploadBtn');
+        this.fileInput = document.getElementById('fileInput');
         this.resources = document.getElementById('resources');
         this.ControlBtn = document.getElementById('ControlBtn');
     }
 
     setupEventListeners() {
-        // Helper function that wraps any callback with scroll-to-top behavior
         const withScrollToTop = (callback) => {
             return (...args) => {
                 callback(...args);
@@ -50,9 +49,8 @@ class TuringSimulator_GUI {
             };
         };
 
-        // Apply to all relevant buttons
-        this.historySlider.addEventListener('input', withScrollToTop(
-            () => this.seekHistory(parseInt(this.historySlider.value))
+        this.historySlider.addEventListener('input', withScrollToTop(() =>
+            this.seekHistory(parseInt(this.historySlider.value))
         ));
 
         this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
@@ -61,8 +59,39 @@ class TuringSimulator_GUI {
         this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
         this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
         this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
-        this.runBtn.addEventListener('click', withScrollToTop(() => this.run()));
-        this.pauseBtn.addEventListener('click', withScrollToTop(() => this.pause()));
+
+        // Connect upload button to file input
+        this.uploadBtn.addEventListener('click', () => {
+            this.fileInput.click();
+        });
+
+        // Handle file selection
+        this.fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result.trim();
+                    window.setRulesText(text);
+                    this.load(); // Automatically load after upload
+                } catch (error) {
+                    console.error("Error loading file:", error);
+                    this.updateMachineStatus("Error loading file", "text-danger");
+                    alert(`Error loading file: ${error.message}`);
+                }
+            };
+            reader.onerror = () => {
+                this.updateMachineStatus("Error reading file", "text-danger");
+                alert("Error reading file");
+            };
+            reader.readAsText(file);
+        });
+
+        this.RunPauseBtn.addEventListener('click', () => {
+            this.ControlBtn.click();
+        });
 
         this.ControlBtn.addEventListener('click', () => {
             if (this.running) {
@@ -73,7 +102,8 @@ class TuringSimulator_GUI {
                 this.run();
             }
         });
-        this.updateControlButton('run')
+
+        this.updateControlButton('run');
     }
 
     load() {
@@ -89,8 +119,6 @@ class TuringSimulator_GUI {
             this.running = false;
             this.updateControlButton('run');
             this.updateMachineStatus("Machine Loaded", "text-secondary");
-            this.runBtn.disabled = false;
-            this.pauseBtn.disabled = true;
             this.stepBtn.disabled = false;
 
             this.history = [{
@@ -121,7 +149,7 @@ class TuringSimulator_GUI {
             this.step_count = 0;
             this.running = false;
             this.stepBtn.disabled = false;
-            this.runBtn.disabled = false;
+            this.RunPauseBtn.disabled = false;
             this.updateControlButton('run');
             this.updateMachineStatus("Machine RESET", "text-secondary");
 
@@ -189,17 +217,15 @@ class TuringSimulator_GUI {
         this.running = false;
         clearTimeout(this.auto_run_timeout);
         this.updateControlButton('run');
-        this.runBtn.disabled = false;
-        this.pauseBtn.disabled = true;
         this.stepBtn.disabled = false;
     }
 
     HALT() {
         this.running = false;
         this.stepBtn.disabled = true;
-        this.runBtn.disabled = true;
-        this.pauseBtn.disabled = true;
+
         this.updateControlButton('reset');
+        this.RunPauseBtn.disabled = true
         const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
         this.updateMachineStatus(textContent, "text-success");    // On halt
     }
@@ -208,8 +234,6 @@ class TuringSimulator_GUI {
         this.running = true;
         this.stepBtn.disabled = true;
 
-        this.runBtn.disabled = true;
-        this.pauseBtn.disabled = false;
         this.updateControlButton('pause');
         this.autoStep();
     }
@@ -338,28 +362,37 @@ class TuringSimulator_GUI {
     }
 
     updateControlButton(state) {
-        const btn = this.ControlBtn;
-        btn.className = 'control-btn'; // Reset classes
+        const btn_ctrl = this.ControlBtn;
+        btn_ctrl.className = 'control-btn'; // Reset classes
+
+        const btn_rp = this.RunPauseBtn;
+        btn_rp.className = 'btn w-100 action-btn';
 
         switch(state) {
             case 'run':
-                btn.classList.add('btn-run');
-                btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                btn_ctrl.classList.add('btn-run');
+                btn_rp.classList.add('btn-run');
+                btn_ctrl.innerHTML = '<i class="bi bi-play-fill"></i>';
+                btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
                 break;
             case 'pause':
-                btn.classList.add('btn-pause');
-                btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                btn_ctrl.classList.add('btn-pause');
+                btn_rp.classList.add('btn-pause');
+                btn_ctrl.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                btn_rp.innerHTML = '<i class="bi bi-pause-fill"></i>Pause';
                 break;
             case 'reset':
-                btn.classList.add('btn-reset');
-                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                btn_ctrl.classList.add('btn-reset');
+                btn_rp.classList.add('btn-run');
+                btn_ctrl.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
                 break;
         }
     }
 
     updateMachineStatus(text, colorClass = "text-primary") {
         const statusEl = document.getElementById("machineStatus");
-        statusEl.className = `fw-bold text-center ${colorClass}`;
+        statusEl.className = `text-machineStatus fw-bold text-center ${colorClass}`;
         statusEl.textContent = text;
     }
 
@@ -384,6 +417,7 @@ class TuringSimulator_GUI {
             window.setRulesText("");
         }
     }
+
 }
 
 export { TuringSimulator_GUI };

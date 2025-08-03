@@ -14,14 +14,15 @@
             --primary-color: #fd0d8d;
             --primary-hover: #f381cf;
 
-            --reset-bg: #5a4cd1;
+            --reset-bg: #cf5e45;
             --load-bg: #019875;
             --copy-bg: #0778c4;
             --clear-bg: #c0392b;
             --goto-bg: #4bf542;
-            --step-bg: #cf5e45;
+            --step-bg: #5a4cd1;
             --run-bg: #00b0ae;
             --pause-bg: #ffdd48;
+            --upload-bg: #f308eb;
 
             --hover-brightness: 1.2;
             --active-brightness: 0.8;
@@ -163,7 +164,7 @@
         }
 
         /* === RULES TEXTAREA === */
-        #rulesEditor { 
+        #rulesEditor {
             height: 200px;
             width: 100%;
             border: 1px solid #dee2e6;
@@ -173,12 +174,12 @@
             background-color: #f8f9fa !important;
             color: #6c757d !important;
         }
+
         .monospace {
             font-family: monospace;
             white-space: pre-wrap;
             word-break: break-word;
         }
-
 
         /* === STATE INDICATORS === */
         .step-state {
@@ -191,7 +192,7 @@
 
         .machineStatus {
             transition: all 0.3s ease;
-            font-size: 1.1rem;
+            font-size: 1.5rem !important;
         }
 
         /* === BUTTON GROUP === */
@@ -199,56 +200,6 @@
             margin-top: 15px;
         }
 
-        /* === INFO BUTTON === */
-        .info-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 35px;
-            height: 35px;
-            padding: 0;
-            border: none;
-            border-radius: 50%;
-            font-weight: bold;
-            font-size: 1.2rem;
-            background-color: var(--primary-color);
-            color: white;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s, transform 0.2s;
-            cursor: pointer;
-            }
-
-            .info-btn:hover {
-            background-color: var(--primary-hover);
-            transform: scale(1.05);
-            }
-
-            /* === CLOSE BUTTON === */
-            .custom-close-btn {
-            background-color: transparent;
-            border: none;
-            color: #656565;
-            width: 30px;
-            height: 30px;
-            padding: 0;
-            border-radius: 50%;
-            font-weight: bold;
-            font-size: 1.25rem;
-            transition: background-color 0.2s, color 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .custom-close-btn:hover {
-            background-color: #9e9999;
-            color: #000;
-            cursor: pointer;
-        }
 
         /* === BUTTON ICON SPACING === */
         .btn i {
@@ -260,10 +211,10 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            width: 35px;
-            height: 35px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            font-size: 1.75rem;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             z-index: 2000;
             display: flex;
@@ -285,7 +236,12 @@
             font-weight: 550;
             color: black !important;
             transition: filter 0.2s ease, background-color 0.2s ease;
+            color: black !important;
+            transition: filter 0.2s ease, background-color 0.2s ease;
             user-select: none;
+
+            white-space: normal !important;
+            word-break: break-word;
         }
 
         /* === BUTTON VARIANTS === */
@@ -297,6 +253,8 @@
         .btn-step   { background-color: var(--step-bg) !important; }
         .btn-run    { background-color: var(--run-bg) !important; }
         .btn-pause  { background-color: var(--pause-bg) !important; }
+        .btn-upload  { background-color: var(--upload-bg) !important; }
+
 
         /* === BUTTON INTERACTIONS === */
         .btn:hover,
@@ -330,54 +288,6 @@
     <!-- Control button -->
     <button id="ControlBtn" class="control-btn bi bi-play-fill">Run</button>
 
-    <!-- Info button -->
-    <button class="btn btn-info info-btn fs-3 bi bi-question-lg" data-bs-toggle="modal" data-bs-target="#infoModal"></button>
-
-    <!-- Info Modal -->
-    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true"
-        data-bs-backdrop="static" data-bs-keyboard="false">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 class="modal-title" id="infoModalLabel">Turing Machine Help</h6>
-                    <button type="button" class="custom-close-btn" data-bs-dismiss="modal" aria-label="Close">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <h5>🧠 Turing Machine Simulator Help</h5>
-                    <p>This simulator visualizes the execution of a deterministic Turing Machine.
-                    You can define custom rules, input tape values, and run the machine step-by-step or continuously.</p>
-                    
-                    <h5>📘 TRANSITION RULE FORMAT:</h5>
-                    <span class="code">
-                        currentState currentSymbol newState newSymbol moveDirection
-                        Example: INIT 0 INIT 0 R
-                    </span>
-                    
-                    <h6>🔧 BASIC SETUP:</h6>
-                    <div class="small">
-                        <ul>
-                            <li>Blank Symbol: '<span id="blankSymbolPlaceholder"></span>'</li>
-                            <li>Initial State: '<span id="initStatePlaceholder"></span>'</li>
-                            <li>Halt State: '<span id="haltStatePlaceholder"></span>'</li>
-                            <li>Move Directions: 'L' (left) | 'R' (right)</li>
-                        </ul>
-                    </div>
-
-                    <h6>🚦 MACHINE LIMITS:</h6>
-                    <div class="small">
-                        <ul>
-                            <li>MAX STATES: <span id="maxStatesPlaceholder"></span></li>
-                            <li>MAX TAPE LEN: <span id="maxTapeLenPlaceholder"></span></li>
-                            <li>MAX STATE SIZE: <span id="maxStateSizePlaceholder"></span> characters</li>
-                            <li>TRANSITION SIZE: <span id="transitionSizePlaceholder"></span> rules</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Main GUI-->
     <div class="container mt-4">
@@ -396,7 +306,7 @@
 
                 <!-- Machine Status -->
                 <div class="mb-2">
-                    <div id="machineStatus" class="text-danger fw-bold text-center"></div>
+                    <div id="machineStatus" class="text-machineStatus fw-bold text-center"></div>
                 </div>
 
                 <!-- History Slider and Step Info -->
@@ -410,16 +320,18 @@
         </div>
 
         <!-- Controls and Configuration -->
-        <div class="row mt-3">
+        <div class="row mt-3 align-items-stretch"> <!-- 🔧 align items vertically -->
+
             <!-- Configure Model -->
-            <div class="col-md-6 mb-3">
+            <div class="col-md-8 mb-2">
                 <div class="card h-100">
                     <div class="card-header">Configure Model</div>
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body">
+
                         <!-- Transition Rules -->
                         <div class="mb-3 flex-grow-1">
                             <label for="rulesEditor" class="form-label">Transition Rules:</label>
-                            <div id="rulesEditor">INIT | FIND | R
+                            <div id="rulesEditor" class="form-control h-100" style="min-height: 200px; white-space: pre-wrap;">INIT | FIND | R
 FIND | FIND | R
 FIND _ HALT | R</div>
                         </div>
@@ -431,18 +343,19 @@ FIND _ HALT | R</div>
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="row g-2 mt-auto">
-                            <div class="col">
-                                <button id="resetBtn" class="btn btn-reset w-100 bi bi-arrow-clockwise"> Reset</button>
+                        <div class="row g-2 mt-auto"> <!-- 🔧 push to bottom -->
+                            <div class="col-3">
+                                <button id="clearRulesBtn" class="btn btn-clear w-100 action-btn bi bi-trash-fill"> Clear</button>
                             </div>
-                            <div class="col">
-                                <button id="loadBtn" class="btn btn-load w-100 bi bi-upload"> Load</button>
+                            <div class="col-3">
+                                <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                                <button id="uploadBtn" class="btn btn-upload w-100 action-btn bi bi-file-earmark-arrow-up"> Upload</button>
                             </div>
-                            <div class="col">
-                                <button id="copyRulesBtn" class="btn btn-copy w-100 bi bi-clipboard-fill"> Copy</button>
+                            <div class="col-3">
+                                <button id="copyRulesBtn" class="btn btn-copy w-100 action-btn bi bi-clipboard-fill"> Copy</button>
                             </div>
-                            <div class="col">
-                                <button id="clearRulesBtn" class="btn btn-clear w-100 bi bi-trash-fill"> Clear</button>
+                            <div class="col-3">
+                                <button id="loadBtn" class="btn btn-load w-100 action-btn bi bi-upload"> Load</button>
                             </div>
                         </div>
                     </div>
@@ -450,57 +363,59 @@ FIND _ HALT | R</div>
             </div>
 
             <!-- Control Machine -->
-            <div class="col-md-6 mb-3">
+            <div class="col-md-4 mb-2">
                 <div class="card h-100">
                     <div class="card-header">Control Machine</div>
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body d-flex flex-column"> <!-- 🔧 flex column -->
+
                         <!-- Step Navigation -->
                         <div class="mb-3">
                             <div class="row align-items-center g-2">
                                 <div class="col-4">
-                                    <label for="gotoStep" class="form-label mb-0">Go to Step:</label>
+                                    <label for="gotoStep" class="form-label mb-0 w-100">Seek Step:</label>
                                 </div>
                                 <div class="col-4">
-                                    <input type="number" id="gotoStep" class="form-control" min="0">
+                                    <input type="number" id="gotoStep" class="form-control" min="0" title="Seek specific step in history">
                                 </div>
                                 <div class="col-4">
-                                    <button class="btn btn-goto w-100 bi bi-signpost-fill" id="gotoBtn"> Go To</button>
+                                    <button class="btn btn-goto w-100 action-btn bi bi-signpost-fill" id="gotoBtn">Seek</button>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Configuration Options -->
                         <div class="mb-3">
-                            <label for="stepEntry" class="form-label">Steps:</label>
-                            <input type="number" id="stepEntry" class="form-control" value="1" min="1">
+                            <label for="stepEntry" class="form-label">Jump Steps:</label>
+                            <input type="number" id="stepEntry" class="form-control" value="1" min="1" title="Steps per jump">
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="maxSteps" class="form-label">Max Steps:</label>
-                            <input type="number" id="maxSteps" class="form-control" value="1000000" min="1">
+                            <input type="number" id="maxSteps" class="form-control" value="1000000" min="1" title="Max steps">
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="delayEntry" class="form-label">Speed (ms):</label>
-                            <input type="number" id="delayEntry" class="form-control" value="300" min="1">
+                            <input type="number" id="delayEntry" class="form-control" value="300" min="1" title="Step delay (ms)">
                         </div>
 
                         <!-- Control Buttons -->
-                        <div class="row g-2 mt-auto">
+                        <div class="row mb-3 g-2 mt-auto"> <!-- 🔧 align bottom -->
                             <div class="col-4">
-                                <button id="stepBtn" class="btn btn-step w-100 action-bi bi-forward-fill"> Step</button>
+                                <button id="stepBtn" class="btn btn-step w-100 action-btn bi bi-forward-fill">Jump</button>
                             </div>
                             <div class="col-4">
-                                <button id="runBtn" class="btn btn-run w-100 action-bi bi-play-fill"> Run</button>
+                                <button id="RunPauseBtn" class="btn btn-runpause w-100 action-btn bi bi-play-fill">Play</button>
                             </div>
                             <div class="col-4">
-                                <button id="pauseBtn" class="btn btn-pause w-100 action-btn bi bi-pause-fill" disabled> Pause</button>
+                                <button id="resetBtn" class="btn btn-reset w-100 action-btn bi bi-arrow-clockwise">Reset</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
 
         <!-- Model Results -->
         <div class="card mt-3">
@@ -510,6 +425,80 @@ FIND _ HALT | R</div>
                 <div id="resources" class="monospace mt-2"></div>
             </div>
         </div>
+
+        <!-- Help Card -->
+        <div class="card mt-3" id="helpCard">
+        <div class="card-header">
+            🧠 Turing Machine Help
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Simulator Overview</h5>
+            <p class="card-text">
+            This simulator visualizes the execution of a deterministic Turing Machine.
+            You can define custom rules, input tape values, and run the machine step-by-step or continuously.
+            </p>
+
+            <h5>📘 TRANSITION RULE FORMAT</h5>
+            <pre class="bg-light p-2 rounded"><code>currentState currentSymbol newState newSymbol moveDirection
+        Example: INIT 0 INIT 0 R</code></pre>
+
+            <h6>🔧 BASIC SETUP</h6>
+            <ul class="small">
+            <li>Blank Symbol: '<span id="blankSymbolPlaceholder"></span>'</li>
+            <li>Initial State: '<span id="initStatePlaceholder"></span>'</li>
+            <li>Halt State: '<span id="haltStatePlaceholder"></span>'</li>
+            <li>Move Directions: 'L' (left) | 'R' (right)</li>
+            </ul>
+
+            <h6>🚦 MACHINE LIMITS</h6>
+            <ul class="small">
+            <li>MAX STATES: <span id="maxStatesPlaceholder"></span></li>
+            <li>MAX TAPE LEN: <span id="maxTapeLenPlaceholder"></span></li>
+            <li>MAX STATE SIZE: <span id="maxStateSizePlaceholder"></span> characters</li>
+            <li>TRANSITION SIZE: <span id="transitionSizePlaceholder"></span> rules</li>
+            </ul>
+        </div>
+        </div>
+
+        <!-- Advanced Settings Card -->
+        <div class="card mt-3">
+            <div class="card-header advanced-header" id="advancedHeader">
+                ⚙️ Advanced Settings
+            </div>
+            <div class="card-body advanced-content hidden" id="advancedContent">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="maxStatesInput" class="form-label">MAX STATES:</label>
+                            <input type="number" id="maxStatesInput" class="form-control" min="1" value="1024">
+                        </div>
+                        <div class="mb-3">
+                            <label for="maxTapeLenInput" class="form-label">MAX TAPE LENGTH:</label>
+                            <input type="number" id="maxTapeLenInput" class="form-control" min="1" value="1048576">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="maxStateSizeInput" class="form-label">MAX STATE SIZE (chars):</label>
+                            <input type="number" id="maxStateSizeInput" class="form-control" min="1" value="32">
+                        </div>
+                        <div class="mb-3">
+                            <label for="transitionSizeInput" class="form-label">MAX TRANSITIONS:</label>
+                            <input type="number" id="transitionSizeInput" class="form-control" min="1" value="710000">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <button id="saveAdvancedBtn" class="btn btn-primary w-100">Save Settings</button>
+                    </div>
+                    <div class="col-6">
+                        <button id="resetAdvancedBtn" class="btn btn-secondary w-100">Reset Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <footer class="text-center py-3 mt-4 bg-light border-top">
@@ -847,35 +836,34 @@ FIND _ HALT | R</div>
                 this.initElements();
                 this.setupEventListeners();
                 this.load();
-
             }
 
             initElements() {
-                this.historySlider = document.getElementById('historySlider');
-                this.gotoStep = document.getElementById('gotoStep');
                 this.gotoBtn = document.getElementById('gotoBtn');
-                this.stepState = document.getElementById('stepState');
-                this.tapeDisplay = document.getElementById('tapeDisplay');
-                this.machineStatus = document.getElementById('machineStatus');
-                this.rulesText = document.getElementById('rulesText');
-                this.tapeInput = document.getElementById('tapeInput');
-                this.stepEntry = document.getElementById('stepEntry');
-                this.maxSteps = document.getElementById('maxSteps');
-                this.delayEntry = document.getElementById('delayEntry');
                 this.loadBtn = document.getElementById('loadBtn');
+                this.maxSteps = document.getElementById('maxSteps');
                 this.resetBtn = document.getElementById('resetBtn');
+                this.gotoStep = document.getElementById('gotoStep');
+                this.stepEntry = document.getElementById('stepEntry');
+                this.tapeInput = document.getElementById('tapeInput');
+                this.rulesText = document.getElementById('rulesText');
+                this.stepState = document.getElementById('stepState');
+                this.delayEntry = document.getElementById('delayEntry');
+                this.tapeDisplay = document.getElementById('tapeDisplay');
+                this.RunPauseBtn = document.getElementById('RunPauseBtn');
                 this.copyRulesBtn = document.getElementById('copyRulesBtn');
+                this.historySlider = document.getElementById('historySlider');
+                this.machineStatus = document.getElementById('machineStatus');
                 this.clearRulesBtn = document.getElementById('clearRulesBtn');
                 this.stepBtn = document.getElementById('stepBtn');
-                this.runBtn = document.getElementById('runBtn');
-                this.pauseBtn = document.getElementById('pauseBtn');
                 this.results = document.getElementById('results');
+                this.uploadBtn = document.getElementById('uploadBtn');
+                this.fileInput = document.getElementById('fileInput');
                 this.resources = document.getElementById('resources');
                 this.ControlBtn = document.getElementById('ControlBtn');
             }
 
             setupEventListeners() {
-                // Helper function that wraps any callback with scroll-to-top behavior
                 const withScrollToTop = (callback) => {
                     return (...args) => {
                         callback(...args);
@@ -883,9 +871,8 @@ FIND _ HALT | R</div>
                     };
                 };
 
-                // Apply to all relevant buttons
-                this.historySlider.addEventListener('input', withScrollToTop(
-                    () => this.seekHistory(parseInt(this.historySlider.value))
+                this.historySlider.addEventListener('input', withScrollToTop(() =>
+                    this.seekHistory(parseInt(this.historySlider.value))
                 ));
 
                 this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
@@ -894,8 +881,39 @@ FIND _ HALT | R</div>
                 this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
                 this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
                 this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
-                this.runBtn.addEventListener('click', withScrollToTop(() => this.run()));
-                this.pauseBtn.addEventListener('click', withScrollToTop(() => this.pause()));
+
+                // Connect upload button to file input
+                this.uploadBtn.addEventListener('click', () => {
+                    this.fileInput.click();
+                });
+
+                // Handle file selection
+                this.fileInput.addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const text = e.target.result.trim();
+                            window.setRulesText(text);
+                            this.load(); // Automatically load after upload
+                        } catch (error) {
+                            console.error("Error loading file:", error);
+                            this.updateMachineStatus("Error loading file", "text-danger");
+                            alert(`Error loading file: ${error.message}`);
+                        }
+                    };
+                    reader.onerror = () => {
+                        this.updateMachineStatus("Error reading file", "text-danger");
+                        alert("Error reading file");
+                    };
+                    reader.readAsText(file);
+                });
+
+                this.RunPauseBtn.addEventListener('click', () => {
+                    this.ControlBtn.click();
+                });
 
                 this.ControlBtn.addEventListener('click', () => {
                     if (this.running) {
@@ -906,7 +924,8 @@ FIND _ HALT | R</div>
                         this.run();
                     }
                 });
-                this.updateControlButton('run')
+
+                this.updateControlButton('run');
             }
 
             load() {
@@ -922,8 +941,6 @@ FIND _ HALT | R</div>
                     this.running = false;
                     this.updateControlButton('run');
                     this.updateMachineStatus("Machine Loaded", "text-secondary");
-                    this.runBtn.disabled = false;
-                    this.pauseBtn.disabled = true;
                     this.stepBtn.disabled = false;
 
                     this.history = [{
@@ -954,7 +971,7 @@ FIND _ HALT | R</div>
                     this.step_count = 0;
                     this.running = false;
                     this.stepBtn.disabled = false;
-                    this.runBtn.disabled = false;
+                    this.RunPauseBtn.disabled = false;
                     this.updateControlButton('run');
                     this.updateMachineStatus("Machine RESET", "text-secondary");
 
@@ -1022,17 +1039,15 @@ FIND _ HALT | R</div>
                 this.running = false;
                 clearTimeout(this.auto_run_timeout);
                 this.updateControlButton('run');
-                this.runBtn.disabled = false;
-                this.pauseBtn.disabled = true;
                 this.stepBtn.disabled = false;
             }
 
             HALT() {
                 this.running = false;
                 this.stepBtn.disabled = true;
-                this.runBtn.disabled = true;
-                this.pauseBtn.disabled = true;
+
                 this.updateControlButton('reset');
+                this.RunPauseBtn.disabled = true
                 const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
                 this.updateMachineStatus(textContent, "text-success");    // On halt
             }
@@ -1041,8 +1056,6 @@ FIND _ HALT | R</div>
                 this.running = true;
                 this.stepBtn.disabled = true;
 
-                this.runBtn.disabled = true;
-                this.pauseBtn.disabled = false;
                 this.updateControlButton('pause');
                 this.autoStep();
             }
@@ -1171,28 +1184,37 @@ FIND _ HALT | R</div>
             }
 
             updateControlButton(state) {
-                const btn = this.ControlBtn;
-                btn.className = 'control-btn'; // Reset classes
+                const btn_ctrl = this.ControlBtn;
+                btn_ctrl.className = 'control-btn'; // Reset classes
+
+                const btn_rp = this.RunPauseBtn;
+                btn_rp.className = 'btn w-100 action-btn';
 
                 switch(state) {
                     case 'run':
-                        btn.classList.add('btn-run');
-                        btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+                        btn_ctrl.classList.add('btn-run');
+                        btn_rp.classList.add('btn-run');
+                        btn_ctrl.innerHTML = '<i class="bi bi-play-fill"></i>';
+                        btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
                         break;
                     case 'pause':
-                        btn.classList.add('btn-pause');
-                        btn.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                        btn_ctrl.classList.add('btn-pause');
+                        btn_rp.classList.add('btn-pause');
+                        btn_ctrl.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                        btn_rp.innerHTML = '<i class="bi bi-pause-fill"></i>Pause';
                         break;
                     case 'reset':
-                        btn.classList.add('btn-reset');
-                        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                        btn_ctrl.classList.add('btn-reset');
+                        btn_rp.classList.add('btn-run');
+                        btn_ctrl.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                        btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
                         break;
                 }
             }
 
             updateMachineStatus(text, colorClass = "text-primary") {
                 const statusEl = document.getElementById("machineStatus");
-                statusEl.className = `fw-bold text-center ${colorClass}`;
+                statusEl.className = `text-machineStatus fw-bold text-center ${colorClass}`;
                 statusEl.textContent = text;
             }
 
@@ -1217,10 +1239,16 @@ FIND _ HALT | R</div>
                     window.setRulesText("");
                 }
             }
+
         }
 
+        // Make editor available globally
+        window.getRulesText = () => editor.getValue();
+        window.setRulesText = (text) => editor.setValue(text);
 
-        // Populate help section
+        // Initialize GUI
+        new TuringSimulator_GUI();
+                    // Populate help section
         document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
         document.getElementById('haltStatePlaceholder').textContent = TuringConfig.HALT_STATE;
         document.getElementById('blankSymbolPlaceholder').textContent = TuringConfig.BLANK;
@@ -1229,8 +1257,6 @@ FIND _ HALT | R</div>
         document.getElementById('maxStateSizePlaceholder').textContent = TuringConfig.MAX_STATE_SIZE;
         document.getElementById('transitionSizePlaceholder').textContent = TuringConfig.TRANSITION_SIZE.toLocaleString();
 
-        // Initialize GUI
-        new TuringSimulator_GUI();
     </script>
 </body>
 </html>
