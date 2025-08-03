@@ -69,9 +69,9 @@ body {
 
 .monospace,
 .rules-info,
-.step-state {
+.form-label {
     font-family: monospace;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
 }
 
 /* === CARD STYLES === */
@@ -172,7 +172,7 @@ body {
 
 /* === STATE INDICATORS === */
 .step-state {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
 }
 
 .step-index {
@@ -181,7 +181,11 @@ body {
 
 .machineStatus {
     transition: all 0.3s ease;
-    font-size: 1.5rem !important;
+    font-size: 1.25rem !important;
+    -webkit-transition: all 0.3s ease;
+    -moz-transition: all 0.3s ease;
+    -ms-transition: all 0.3s ease;
+    -o-transition: all 0.3s ease;
 }
 
 /* === BUTTON GROUP === */

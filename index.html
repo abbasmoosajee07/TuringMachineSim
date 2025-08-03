@@ -1,51 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turing Machine Simulator</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Ace Editor CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.css">
-    <link rel="stylesheet" href="turing_gui/styles.css">
-</head>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Turing Machine Simulator</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <!-- Ace Editor CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.css">
+        <link rel="stylesheet" href="turing_gui/styles.css">
+    </head>
+
     <body>
         <!-- Control button -->
         <button id="ControlBtn" class="control-btn bi bi-play-fill"></button>
 
-        <!-- Main GUI-->
+        <!-- Title and Model Drop Down -->
         <div class="container mt-4">
             <h1 class="text-center mb-4">Turing Machine Simulator</h1>
 
+            <!-- <div class="row align-items-center justify-content-between mb-3">
+                <div class="col-md-6">
+                <h1 class="mb-0 text-center">Turing Machine Simulator</h1>
+                </div>
+
+                <div class="col-md-6 text-end">
+                    <div class="d-flex align-items-center justify-content-end">
+                        <select class="form-select w-auto" id="machineTypeSelect">
+                        <option value="deterministic">Deterministic</option>
+                        <option value="non-deterministic">Non-Deterministic</option>
+                        <option value="multi-tape">Multi-Tape</option>
+                        <option value="multi-head">Multi-Head</option>
+                        <option value="multi-track">Multi-Track</option>
+                        <option value="enumerator">Enumerator</option>
+                        <option value="semi-infinite">Semi-Infinite</option>
+                        <option value="k-dimensional">K-Dimensional</option>
+                        </select>
+                    </div>
+                </div>
+            </div> -->
+
+        </div>
+
+        <!-- Main GUI-->
+        <div class="container mt-4">
+
             <!-- Tape Display -->
-            <div class="card">
-                <div class="card-header">Ticker Tape</div>
+            <div class="card mt-3">
+                <!-- <div class="card-header">Ticker Tape</div> -->
+                <div class="card-header d-flex align-items-center justify-content-between">
+                <span>Ticker Tape</span>
+                </div>
+
                 <div class="card-body">
                     <!-- Tape Display -->
-                    <div class="mb-4">
+                    <div class="mb-2 mt-1">
                         <div class="tape-wrapper border rounded p-2 bg-light">
                             <div id="tapeDisplay" class="tape-container"></div>
                         </div>
                     </div>
 
                     <!-- Machine Status -->
-                    <div class="mb-2">
-                        <div id="machineStatus" class="text-machineStatus fw-bold text-center"></div>
+                    <div class="mb-2 mt-1">
+                        <div id="machineStatus" class="machineStatus fw-bold text-center"></div>
                     </div>
 
                     <!-- History Slider and Step Info -->
-                    <div class="mb-4">
-                        <label for="historySlider" class="form-label fw-semibold">Step History:</label>
-                        <input type="range" class="form-range slider-primary" id="historySlider" min="0" max="0" value="0">
+                    <div class="mb-2 mt-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <label for="historySlider" class="form-label mb-0">History:</label>
+                            <input type="range" class="form-range slider-primary flex-grow-1" id="historySlider" min="0" max="0" value="0">
+                        </div>
                     </div>
 
-                    <div id="stepState" class="step-state text-center small text-muted"></div>
+                    <div id="stepState" class="step-state text-center mb-0"></div>
                 </div>
             </div>
 
             <!-- Controls and Configuration -->
-            <div class="row mt-3 align-items-stretch"> <!-- 🔧 align items vertically -->
+            <div class="row mt-3 align-items-stretch">
 
                 <!-- Configure Model -->
                 <div class="col-md-8 mb-2">
@@ -127,7 +160,7 @@ FIND _ HALT | R</div>
                             <!-- Control Buttons -->
                             <div class="row mb-3 g-2 mt-auto"> <!-- 🔧 align bottom -->
                                 <div class="col-4">
-                                    <button id="stepBtn" class="btn btn-step w-100 action-btn bi bi-forward-fill">Jump</button>
+                                    <button id="stepBtn" class="btn btn-step w-100 action-btn bi bi-skip-forward-fill"> Jump</button>
                                 </div>
                                 <div class="col-4">
                                     <button id="RunPauseBtn" class="btn btn-runpause w-100 action-btn bi bi-play-fill">Play</button>
@@ -152,68 +185,95 @@ FIND _ HALT | R</div>
 
             <!-- Help Card -->
             <div class="card mt-3" id="helpCard">
-            <div class="card-header">
-                🧠 Turing Machine Help
-            </div>
-            <div class="card-body">
-                <h5 class="card-title">Simulator Overview</h5>
-                <p class="card-text">
-                This simulator visualizes the execution of a deterministic Turing Machine.
-                You can define custom rules, input tape values, and run the machine step-by-step or continuously.
-                </p>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Column 1: About Turing Machines -->
+                        <div class="col-md-4 mb-4">
+                            <h5 class="mb-3">📖 What is a Turing Machine?</h5>
+                            <p class="small text-muted">
+                                A Turing Machine is a theoretical computing model proposed by Alan Turing. It manipulates symbols on an infinite tape according to a set of rules. Despite its simplicity, it can simulate the logic of any algorithm.
+                            </p>
+                            <p class="small text-muted">
+                                It consists of:
+                                <ul class="small text-muted ps-3">
+                                    <li>A tape (memory)</li>
+                                    <li>A head (reads/writes)</li>
+                                    <li>A state machine (set of instructions)</li>
+                                </ul>
+                            </p>
+                            <p class="small mb-0">
+                                <a href="https://en.wikipedia.org/wiki/Turing_machine" target="_blank" class="text-decoration-none">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i> Learn more
+                                </a>
+                            </p>
+                        </div>
 
-                <h5>📘 TRANSITION RULE FORMAT</h5>
-                <pre class="bg-light p-2 rounded"><code>[currentState] [currentSymbol] [newState] [newSymbol] [moveDirection]
-Example: INIT 0 INIT 0 R</code></pre>
+                        <!-- Column 2: Instructions -->
+                        <div class="col-md-5 mb-4">
+                            <h5 class="mb-3">🛠 Try It Out</h5>
+                            <p class="small text-muted">
+                                Define your machine using <strong>transition rules</strong> and provide an input tape. You can run the machine step-by-step or automatically.
+                            </p>
+                            <h6 class="small text-dark">🧾 Rule Format</h6>
+                            <pre class="bg-light p-2 rounded small"><code>[currentState] [currentSymbol] [newState] [newSymbol] [Dir]</code></pre>
+                            <p class="small text-muted">Example: <code>INIT 0 WRITE 1 R</code></p>
 
-                <h6>🔧 BASIC SETUP</h6>
-                <ul class="small">
-                <li>Blank Symbol: '<span id="blankSymbolPlaceholder"></span>'</li>
-                <li>Initial State: '<span id="initStatePlaceholder"></span>'</li>
-                <li>Halt State: '<span id="haltStatePlaceholder"></span>'</li>
-                <li>Move Directions: 'L' (left) | 'R' (right)</li>
-                </ul>
+                            <h6 class="small text-dark mt-3">🔁 Move Directions</h6>
+                            <ul class="small text-muted ps-3">
+                                <li><code>L</code> – Move Left</li>
+                                <li><code>R</code> – Move Right</li>
+                            </ul>
 
-                <h6>🚦 MACHINE LIMITS</h6>
-                <ul class="small">
-                <li>MAX STATES: <span id="maxStatesPlaceholder"></span></li>
-                <li>MAX TAPE LEN: <span id="maxTapeLenPlaceholder"></span></li>
-                <li>MAX STATE SIZE: <span id="maxStateSizePlaceholder"></span> characters</li>
-                <li>TRANSITION SIZE: <span id="transitionSizePlaceholder"></span> rules</li>
-                </ul>
+                        </div>
+
+                        <!-- Column 3: Configuration & Limits -->
+                        <div class="col-md-3 mb-4">
+                            <h5 class="mb-3">⚙️ Machine Configuration</h5>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• Blank Symbol: <code>'<span id="blankSymbolPlaceholder"></span>'</code></li>
+                                <li>• Initial State: <code>'<span id="initStatePlaceholder"></span>'</code></li>
+                                <li>• Halt State: <code>'<span id="haltStatePlaceholder"></span>'</code></li>
+                            </ul>
+
+                            <h6 class="small text-dark mt-3">🚦 Limits</h6>
+                            <ul class="list-unstyled small text-muted">
+                                <li>• Max States: <span id="maxStatesPlaceholder"></span></li>
+                                <li>• Max Tape Length: <span id="maxTapeLenPlaceholder"></span></li>
+                                <li>• Max State Name: <span id="maxStateSizePlaceholder"></span> characters</li>
+                                <li>• Max Rules: <span id="transitionSizePlaceholder"></span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
-            </div>
+
         </div>
-
-        <footer class="text-center py-3 mt-4 bg-light border-top">
-            <a href="https://github.com/abbasmoosajee07/TuringMachineSim" target="_blank"
-                title="View on GitHub" class="text-dark">
-                <i class="bi bi-github h4"></i>
-            </a>
-        </footer>
 
         <!-- JavaScript Libraries -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
 
         <!-- Main Application Script -->
         <script type="module">
             import { TuringConfig, MachineLogic } from './javascript_machine/TuringBrain.js';
-            import { TuringSimulator_GUI } from './javascript_machine/Simulator_GUI.js';
+            import { Simulator_GUI } from './javascript_machine/Simulator_GUI.js';
 
             window.TuringConfig = TuringConfig;
             window.MachineLogic = MachineLogic;
-            window.TuringSimulator_GUI = TuringSimulator_GUI;
+            window.Simulator_GUI = Simulator_GUI;
 
             // Initialize Ace Editor
             const editor = ace.edit("rulesEditor");
-            editor.setTheme("ace/theme/chrome");
+            editor.setTheme("ace/theme/KatzenMilch");
             editor.session.setMode("ace/mode/text");
             editor.setOptions({
                 fontSize: "14px",
                 showLineNumbers: true,
                 showGutter: true,
+                cursorStyle: "ace",
                 highlightActiveLine: true,
                 enableBasicAutocompletion: true,
                 enableLiveAutocompletion: true
@@ -224,7 +284,7 @@ Example: INIT 0 INIT 0 R</code></pre>
             window.setRulesText = (text) => editor.setValue(text);
 
             // Initialize GU
-            new TuringSimulator_GUI();
+            new Simulator_GUI();
 
             // Populate help section
             document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
@@ -237,5 +297,19 @@ Example: INIT 0 INIT 0 R</code></pre>
 
         </script>
 
+        <!-- Footer -->
+        <footer class="text-center py-2 mt-5 bg-light border-top small text-muted">
+            <div class="container">
+                <div class="mb-2">
+                    &copy; <span id="year"></span> Abbas Moosajee &nbsp;|&nbsp;
+                    <a href="https://github.com/abbasmoosajee07/TuringMachineSim" target="_blank" title="View on GitHub" class="text-dark text-decoration-none">
+                        <i class="bi bi-github align-middle"></i> GitHub
+                    </a>
+                    &nbsp;|&nbsp; MIT License
+                </div>
+            </div>
+        </footer>
+
     </body>
+
 </html>

@@ -1,6 +1,6 @@
 import { TuringConfig  } from "./TuringBrain.js";
 
-class TuringSimulator_GUI {
+class Simulator_GUI {
     constructor() {
         this.init_time = TuringConfig.getTimestamp();
         this.MAX_STEPS = 0;
@@ -49,45 +49,22 @@ class TuringSimulator_GUI {
             };
         };
 
-        this.historySlider.addEventListener('input', withScrollToTop(() =>
-            this.seekHistory(parseInt(this.historySlider.value))
-        ));
+        // Connect upload button to file input
+        this.uploadBtn.addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', (event) => this.uploadRules(event));
 
-        this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
-        this.clearRulesBtn.addEventListener('click', withScrollToTop(() => this.clearRules()));
         this.loadBtn.addEventListener('click', withScrollToTop(() => this.load()));
         this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
+
         this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
         this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
 
-        // Connect upload button to file input
-        this.uploadBtn.addEventListener('click', () => {
-            this.fileInput.click();
-        });
+        this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
+        this.clearRulesBtn.addEventListener('click', withScrollToTop(() => this.clearRules()));
 
-        // Handle file selection
-        this.fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const text = e.target.result.trim();
-                    window.setRulesText(text);
-                    this.load(); // Automatically load after upload
-                } catch (error) {
-                    console.error("Error loading file:", error);
-                    this.updateMachineStatus("Error loading file", "text-danger");
-                    alert(`Error loading file: ${error.message}`);
-                }
-            };
-            reader.onerror = () => {
-                this.updateMachineStatus("Error reading file", "text-danger");
-                alert("Error reading file");
-            };
-            reader.readAsText(file);
-        });
+        this.historySlider.addEventListener('input', withScrollToTop(() =>
+            this.seekHistory(parseInt(this.historySlider.value))
+        ));
 
         this.RunPauseBtn.addEventListener('click', () => {
             this.ControlBtn.click();
@@ -104,6 +81,32 @@ class TuringSimulator_GUI {
         });
 
         this.updateControlButton('run');
+    }
+
+    uploadRules(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const text = e.target.result.trim();
+                window.setRulesText(text);
+                this.load(); // auto-load after upload
+            } catch (error) {
+                console.error("Error loading file:", error);
+                this.updateMachineStatus("Error loading file", "text-danger");
+                alert(`Error loading file: ${error.message}`);
+            }
+        };
+
+        reader.onerror = () => {
+            this.updateMachineStatus("Error reading file", "text-danger");
+            alert("Error reading file");
+        };
+
+        reader.readAsText(file);
     }
 
     load() {
@@ -318,7 +321,6 @@ class TuringSimulator_GUI {
         // Restore vertical scroll position
         window.scrollTo(0, scrollY);
 
-
         // Update status
         this.historySlider.max = this.history.length - 1;
         this.historySlider.value = this.step_count;
@@ -392,7 +394,7 @@ class TuringSimulator_GUI {
 
     updateMachineStatus(text, colorClass = "text-primary") {
         const statusEl = document.getElementById("machineStatus");
-        statusEl.className = `text-machineStatus fw-bold text-center ${colorClass}`;
+        statusEl.className = `machineStatus fw-bold text-center ${colorClass}`;
         statusEl.textContent = text;
     }
 
@@ -420,5 +422,5 @@ class TuringSimulator_GUI {
 
 }
 
-export { TuringSimulator_GUI };
+export { Simulator_GUI };
 
