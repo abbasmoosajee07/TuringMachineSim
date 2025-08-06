@@ -1,387 +1,515 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turing Machine Simulator</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <!-- Ace Editor CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.css">
-    <style>
-        /* === ROOT VARIABLES === */
-        :root {
-            --primary-color: #fd0d8d;
-            --primary-hover: #e08fc3;
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Turing Machine Simulator</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+        <!-- Ace Editor CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.css">
+        <style>
+            /* === ROOT VARIABLES === */
+            :root {
+                --primary-color: #fd0d8d;
+                --primary-hover: #e08fc3;
 
-            --reset-bg: #b94734;      /* Softened burnt red */
-            --load-bg: #2b9d84;       /* Muted teal */
-            --copy-bg: #357ab7;       /* Calmer blue */
-            --clear-bg: #b63b2e;      /* Brick red */
-            --goto-bg: #48b04f;       /* Earthy green */
-            --step-bg: #5c5dbb;       /* Dusty indigo */
-            --run-bg: #00979c;        /* Slightly dimmed cyan */
-            --pause-bg: #e6c94c;      /* Muted golden yellow */
-            --upload-bg: #c04fb9;     /* Dusty magenta */
+                --reset-bg: #b94734;      /* Softened burnt red */
+                --load-bg: #2b9d84;       /* Muted teal */
+                --copy-bg: #357ab7;       /* Calmer blue */
+                --clear-bg: #b63b2e;      /* Brick red */
+                --goto-bg: #48b04f;       /* Earthy green */
+                --step-bg: #5c5dbb;       /* Dusty indigo */
+                --run-bg: #00979c;        /* Slightly dimmed cyan */
+                --pause-bg: #e6c94c;      /* Muted golden yellow */
+                --upload-bg: #c04fb9;     /* Dusty magenta */
 
-            --hover-brightness: 1.25;
-            --active-brightness: 0.85;
-        }
+                --hover-brightness: 1.25;
+                --active-brightness: 0.85;
+            }
 
+            /* === INPUT STYLING === */
+            input:focus,
+            input:hover {
+                outline: none !important;
+                box-shadow: none !important;
+            }
 
-        /* === INPUT STYLING === */
-        input:focus,
-        input:hover {
-            outline: none !important;
-            box-shadow: none !important;
-        }
+            input.form-control:focus {
+                outline: none;
+                border-color: var(--primary-hover);
+                border-width: 1px;
+            }
 
-        input.form-control:focus {
-            outline: none;
-            border-color: var(--primary-hover);
-            border-width: 1px;
-        }
+            /* === BODY BASE STYLES === */
+            body {
+                background-color: #f5f5f5;
+                font-size: 0.9rem;
+            }
 
-        #machineTypeSelect {
-            font-weight: 500;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
+            body {
+            margin-left: 1px;
+            margin-right: 1px;
+            }
 
-        /* === BODY BASE STYLES === */
-        body {
-            background-color: #f5f5f5;
-            font-size: 0.9rem;
-        }
+            /* === SLIDER (WebKit Browsers) === */
+            .slider-primary::-webkit-slider-thumb {
+                background-color: var(--primary-color);
+                border: none;
+                border-radius: 50%;
+                height: 16px;
+                width: 16px;
+                margin-top: -6px;
+                cursor: pointer;
+                transition: background 0.3s;
+            }
 
-        /* === SLIDER (WebKit Browsers) === */
-        .slider-primary::-webkit-slider-thumb {
-            background-color: var(--primary-color);
-            border: none;
-            border-radius: 50%;
-            height: 16px;
-            width: 16px;
-            margin-top: -6px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
+            .slider-primary:hover::-webkit-slider-thumb {
+                background-color: var(--primary-hover);
+                transform: scale(1.05);
+            }
 
-        .slider-primary:hover::-webkit-slider-thumb {
-            background-color: var(--primary-hover);
-            transform: scale(1.05);
-        }
+            .slider-primary::-webkit-slider-runnable-track {
+                background-color: #ddd;
+                height: 6px;
+                border-radius: 3px;
+            }
 
-        .slider-primary::-webkit-slider-runnable-track {
-            background-color: #ddd;
-            height: 6px;
-            border-radius: 3px;
-        }
+            /* === TYPOGRAPHY === */
+            .stepState {
+                font-size: 1.15rem;
+                font-weight: 300;
+                letter-spacing: 0.35px;
+                margin-top: 0.5rem;
+            }
 
-        /* === TYPOGRAPHY === */
-        .stepState {
-            font-size: 1.15rem;
-            font-weight: 300;
-            letter-spacing: 0.35px;
-            margin-top: 0.5rem;
-        }
+            .monospace,
+            .rules-info,
+            .form-label {
+                font-family: monospace;
+                font-size: 0.95rem;
+            }
 
-        .monospace,
-        .rules-info,
-        .step-state {
-            font-family: monospace;
-            font-size: 0.9rem;
-        }
+            /* === CARD STYLES === */
+            .card {
+                margin-bottom: 20px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
 
-        /* === CARD STYLES === */
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+            .card-header {
+                font-weight: bold;
+                font-size: 1.05rem;
+                background-color: #f9f9f9;
+                color: #333;
+                padding: 0.4rem 0.8rem;
+                border-bottom: 1px solid #dee2e6;
+                letter-spacing: 0.5px;
+            }
 
-        .card-header {
-            font-weight: bold;
-            font-size: 1.05rem;
-            background-color: #f9f9f9;
-            color: #333;
-            padding: 0.4rem 0.8rem;
-            border-bottom: 1px solid #dee2e6;
-            letter-spacing: 0.5px;
-        }
+            /* === TAPE STYLES === */
+            .tape-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                padding: 10px 0;
+                margin: 10px 0;
+                background-color: #f9f9f9;
+                border-radius: 2px;
+                border: 1pt solid #ccc;
+                scrollbar-width: thin;
+                scrollbar-color: #888 #f1f1f1;
+            }
 
-        /* === TAPE STYLES === */
-        .tape-wrapper {
-            width: 100%;
-            overflow-x: auto;
-            padding: 10px 0;
-            margin: 10px 0;
-            background-color: #f9f9f9;
-            border-radius: 2px;
-            border: 1pt solid #ccc;
-            scrollbar-width: thin;
-            scrollbar-color: #888 #f1f1f1;
-        }
+            .tape-container {
+                display: inline-flex;
+                min-width: 100%;
+            }
 
-        .tape-container {
-            display: inline-flex;
-            min-width: 100%;
-        }
+            .tape-cell {
+                min-width: 40px;
+                width: 40px;
+                height: 40px;
+                border: 1px solid #ddd;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 2px;
+                font-size: 21px;
+                background-color: white;
+                flex-shrink: 0;
+                font-weight: 600; /* <- make all text bold */
+            }
 
-        .tape-cell {
-            min-width: 40px;
-            width: 40px;
-            height: 40px;
-            border: 1px solid #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 2px;
-            font-size: 21px;
-            background-color: white;
-            flex-shrink: 0;
-            font-weight: 600; /* <- make all text bold */
-        }
+            .tape-cell.active {
+                border: 4px solid var(--primary-color);
+                font-weight: bold;
+            }
 
-        .tape-cell.active {
-            border: 4px solid var(--primary-color);
-            font-weight: bold;
-        }
+            .tape-current {
+                color: var(--primary-color);
+                font-weight: bold;
+            }
 
-        .tape-current {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
+            /* === SCROLLBAR STYLING === */
+            .tape-container::-webkit-scrollbar{
+                height: 8px;
+            }
 
-        /* === SCROLLBAR STYLING === */
-        .tape-container::-webkit-scrollbar{
-            height: 8px;
-        }
+            .tape-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 4px;
+            }
 
-        .tape-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
+            .tape-container::-webkit-scrollbar-thumb{
+                background: #888;
+                border-radius: 4px;
+            }
 
-        .tape-container::-webkit-scrollbar-thumb{
-            background: #888;
-            border-radius: 4px;
-        }
+            .tape-container::-webkit-scrollbar-thumb:hover{
+                background: #555;
+            }
 
-        .tape-container::-webkit-scrollbar-thumb:hover{
-            background: #555;
-        }
+            /* === RULES TEXTAREA === */
+            #rulesEditor {
+                height: 200px;
+                width: 100%;
+                border: 1px solid #dee2e6;
+                border-radius: 0.25rem;
+            }
+            .ace_gutter {
+                background-color: #f8f9fa !important;
+                color: #6c757d !important;
+            }
 
-        /* === RULES TEXTAREA === */
-        #rulesEditor {
-            height: 200px;
-            width: 100%;
-            border: 1px solid #dee2e6;
-            border-radius: 0.25rem;
-        }
-        .ace_gutter {
-            background-color: #f8f9fa !important;
-            color: #6c757d !important;
-        }
+            .monospace {
+                font-family: monospace;
+                white-space: pre-wrap;
+                word-break: break-word;
+            }
 
-        .monospace {
-            font-family: monospace;
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
+            /* === STATE INDICATORS === */
+            .step-state {
+                font-size: 1.25rem;
+            }
 
-        /* === STATE INDICATORS === */
-        .step-state {
-            font-size: 1.1rem;
-        }
+            .step-index {
+                color: var(--primary-color);
+            }
 
-        .step-index {
-            color: var(--primary-color);
-        }
+            .machineStatus {
+                transition: all 0.3s ease;
+                font-size: 1.25rem !important;
+                -webkit-transition: all 0.3s ease;
+                -moz-transition: all 0.3s ease;
+                -ms-transition: all 0.3s ease;
+                -o-transition: all 0.3s ease;
+            }
 
-        .machineStatus {
-            transition: all 0.3s ease;
-            font-size: 1.5rem !important;
-        }
-
-        /* === BUTTON GROUP === */
-        .btn-group {
-            margin-top: 15px;
-        }
-
-
-        /* === BUTTON ICON SPACING === */
-        .btn i {
-            margin-right: 5px;
-        }
-
-        /* === CONTROL BUTTON === */
-        .control-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            font-size: 1.75rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            transition: all 0.3s ease;
-        }
-
-        .control-btn:hover {
-            transform: scale(1.15);
-        }
-
-        /* === BUTTON BASE === */
-        .btn {
-            display: inline-block;
-            vertical-align: middle;
-            text-align: center;
-            font-weight: 550;
-            color: black !important;
-            transition: filter 0.2s ease, background-color 0.2s ease;
-            color: black !important;
-            transition: filter 0.2s ease, background-color 0.2s ease;
-            user-select: none;
-
-            white-space: normal !important;
-            word-break: break-word;
-        }
-
-        /* === BUTTON VARIANTS === */
-        .btn-reset  { background-color: var(--reset-bg) !important; }
-        .btn-load   { background-color: var(--load-bg) !important; }
-        .btn-copy   { background-color: var(--copy-bg) !important; }
-        .btn-clear  { background-color: var(--clear-bg) !important; }
-        .btn-goto   { background-color: var(--goto-bg) !important; }
-        .btn-step   { background-color: var(--step-bg) !important; }
-        .btn-run    { background-color: var(--run-bg) !important; }
-        .btn-pause  { background-color: var(--pause-bg) !important; }
-        .btn-upload  { background-color: var(--upload-bg) !important; }
+            /* === BUTTON GROUP === */
+            .btn-group {
+                margin-top: 15px;
+            }
 
 
-        /* === BUTTON INTERACTIONS === */
-        .btn:hover,
-        .btn:focus,
-        .btn:focus-visible,
-        .info-btn {
-            filter: brightness(var(--hover-brightness)) !important;
-            transform: scale(1.05);
-        }
+            /* === BUTTON ICON SPACING === */
+            .btn i {
+                margin-right: 5px;
+            }
 
-        .btn:active,
-        .info-btn {
-            filter: brightness(var(--active-brightness)) !important;
-            border: none !important;
-        }
+            /* === CONTROL BUTTON === */
+            .control-btn {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 45px;
+                height: 45px;
+                border-radius: 50%;
+                font-size: 1.75rem;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: none;
+                transition: all 0.3s ease;
+            }
 
-        /* === DISABLED BUTTON STATE === */
-        button:disabled,
-        .btn:disabled {
-            background-color: #e0e0e0 !important;
-            color: #888 !important;
-            border-color: #ccc !important;
-            cursor: not-allowed !important;
-            opacity: 1 !important;
-            filter: none !important;
-        }
-    </style>
-</head>
+            .control-btn:hover {
+                transform: scale(1.15);
+            }
 
-<body>
+            /* === BUTTON BASE === */
+            .btn {
+                display: inline-block;
+                vertical-align: middle;
+                text-align: center;
+                font-weight: 550;
+                color: black !important;
+                transition: filter 0.2s ease, background-color 0.2s ease;
+                color: black !important;
+                transition: filter 0.2s ease, background-color 0.2s ease;
+                user-select: none;
+
+                white-space: normal !important;
+                word-break: break-word;
+            }
+
+            /* === BUTTON VARIANTS === */
+            .btn-reset  { background-color: var(--reset-bg) !important; }
+            .btn-load   { background-color: var(--load-bg) !important; }
+            .btn-copy   { background-color: var(--copy-bg) !important; }
+            .btn-clear  { background-color: var(--clear-bg) !important; }
+            .btn-goto   { background-color: var(--goto-bg) !important; }
+            .btn-step   { background-color: var(--step-bg) !important; }
+            .btn-run    { background-color: var(--run-bg) !important; }
+            .btn-pause  { background-color: var(--pause-bg) !important; }
+            .btn-upload  { background-color: var(--upload-bg) !important; }
+
+
+            /* === BUTTON INTERACTIONS === */
+            .btn:hover,
+            .btn:focus,
+            .btn:focus-visible,
+            .info-btn {
+                filter: brightness(var(--hover-brightness)) !important;
+                transform: scale(1.05);
+            }
+
+            .btn:active,
+            .info-btn {
+                filter: brightness(var(--active-brightness)) !important;
+                border: none !important;
+            }
+
+            /* === DISABLED BUTTON STATE === */
+            button:disabled,
+            .btn:disabled {
+                background-color: #e0e0e0 !important;
+                color: #888 !important;
+                border-color: #ccc !important;
+                cursor: not-allowed !important;
+                opacity: 1 !important;
+                filter: none !important;
+            }
+
+            .gif-controls {
+                display: inline-flex;
+                align-items: center;
+                gap: 1rem;
+                font-size: 0.95rem;
+            }
+
+            .gif-label {
+                font-weight: 600;
+                color: #333;
+                font-size: 0.9rem;
+                margin-bottom: 0;
+            }
+
+            /* Custom GIF button */
+            .gif-btn {
+                display: inline-flex;
+                align-items: center;
+                background-color: transparent;
+                border: 2px solid #999;
+                color: #000;
+                padding: 6px 10px;
+                border-radius: 8px;
+                font-size: 1rem;
+                transition: all 0.2s ease-in-out;
+                border: none !important;
+            }
+
+            .gif-btn:hover:enabled {
+                background-color: transparent;
+                border-color: transparent;
+                transform: scale(1.25);
+            }
+
+            .gif-btn:disabled {
+                cursor: not-allowed;
+                background-color: transparent !important;
+            }
+
+            /* Align checkbox vertically */
+            .styled-checkbox {
+                width: 1.1rem;
+                height: 1.1rem;
+                accent-color: var(--primary-color);
+                cursor: pointer;
+                border-radius: 100%;
+                width: 16px;
+                height: 16px;
+                border-color: transparent !important;
+                box-sizing: border-box;
+                padding: initial;
+                margin: 3px;
+            }
+
+            /* GIF preview styles */
+            .gif-preview-container {
+                margin-top: 20px;
+                text-align: center;
+            }
+            
+            .gif-preview {
+                max-width: 100%;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                margin-bottom: 10px;
+            }
+            
+            .gif-progress {
+                margin-top: 10px;
+                font-size: 0.9rem;
+                color: #666;
+            }
+
+        </style>
+    </head>
+
+    <body>
         <!-- Control button -->
         <button id="ControlBtn" class="control-btn bi bi-play-fill"></button>
 
         <!-- Title and Model Drop Down -->
         <div class="container mt-4">
             <h1 class="text-center mb-4">Turing Machine Simulator</h1>
-
-            <!-- <div class="row align-items-center justify-content-between mb-3">
-                <div class="col-md-6">
-                <h1 class="mb-0 text-center">Turing Machine Simulator</h1>
-                </div>
-
-                <div class="col-md-6 text-end">
-                    <div class="d-flex align-items-center justify-content-end">
-                        <select class="form-select w-auto" id="machineTypeSelect">
-                        <option value="deterministic">Deterministic</option>
-                        <option value="non-deterministic">Non-Deterministic</option>
-                        <option value="multi-tape">Multi-Tape</option>
-                        <option value="multi-head">Multi-Head</option>
-                        <option value="multi-track">Multi-Track</option>
-                        <option value="enumerator">Enumerator</option>
-                        <option value="semi-infinite">Semi-Infinite</option>
-                        <option value="k-dimensional">K-Dimensional</option>
-                        </select>
-                    </div>
-                </div>
-            </div> -->
-
         </div>
 
         <!-- Main GUI-->
         <div class="container mt-4">
-
-            <!-- Tape Display -->
-            <div class="card mt-3">
-                <!-- <div class="card-header">Ticker Tape</div> -->
-                <div class="card-header d-flex align-items-center justify-content-between">
-                <span>Ticker Tape</span>
+            <!-- Ticker Tape & Controls Card -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Ticker Tape</span>
+                    <div class="gif-controls d-flex align-items-center gap-2">
+                        <button id="showGIFControls" class="btn btn-sm btn-outline-primary bi bi-camera-reels-fill"> Build GIF</button>
+                    </div>
                 </div>
 
                 <div class="card-body">
                     <!-- Tape Display -->
-                    <div class="mb-2 mt-1">
-                        <div class="tape-wrapper border rounded p-2 bg-light">
-                            <div id="tapeDisplay" class="tape-container"></div>
-                        </div>
+                    <div class="tape-wrapper border rounded p-3 bg-light mb-3">
+                        <div id="tapeDisplay" class="tape-container"></div>
                     </div>
 
                     <!-- Machine Status -->
-                    <div class="mb-2 mt-1">
-                        <div id="machineStatus" class="machineStatus fw-bold text-center"></div>
+                    <div id="machineStatus" class="machineStatus fw-bold text-center text-secondary mb-3"></div>
+
+                    <!-- History Slider -->
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <label for="historySlider" class="form-label mb-0 text-nowrap">History:</label>
+                        <input type="range" class="slider-primary form-range flex-grow-1" id="historySlider" min="0" max="0" value="0">
                     </div>
 
-                    <!-- History Slider and Step Info -->
-                    <div class="mb-2 mt-1">
-                        <div class="d-flex align-items-center gap-2">
-                            <label for="historySlider" class="form-label mb-0">History:</label>
-                            <input type="range" class="form-range slider-primary flex-grow-1" id="historySlider" min="0" max="0" value="0">
+                    <!-- Step Info -->
+                    <div id="stepState" class="step-state text-center text-muted small"></div>
+                </div>
+            </div>
+
+            <!-- GIF Preview Card -->
+            <div id="gifCard" class="card mt-4 shadow-sm" style="display: none;">
+                <div class="card-header">GIF Preview</div>
+
+                <div class="card-body">
+                    <!-- Configuration + Actions -->
+                    <div class="row g-2 align-items-center justify-content-center mb-3">
+
+                        <!-- Delay -->
+                        <div class="col-auto d-flex align-items-center">
+                            <label for="gifSpeed" class="me-1 mb-0 small">Delay(ms):</label>
+                            <input type="number" id="gifSpeed" class="form-control text-center"
+                                style="width: 60px; height: 24px; padding: 0 4px; font-size: 12px;"
+                                min="50" max="5000" step="50" value="500">
+                        </div>
+
+                        <!-- BG Color -->
+                        <div class="col-auto d-flex align-items-center">
+                            <label for="gifColor" class="me-1 mb-0 small">GIF Color:</label>
+                            <input type="color" id="gifColor" class="form-control form-control-color p-0"
+                                style="width: 28px; height: 24px;" value="#fd490d">
+                        </div>
+
+                        <!-- Cells -->
+                        <div class="col-auto d-flex align-items-center">
+                            <label for="visibleCells" class="me-1 mb-0 small">Cells No:</label>
+                            <input type="number" id="visibleCells" class="form-control text-center"
+                                style="width: 50px; height: 24px; padding: 0 4px; font-size: 12px;"
+                                min="1" max="99" value="15">
+                        </div>
+
+                        <!-- Resolution -->
+                        <div class="col-auto d-flex align-items-center">
+                            <label for="resolution" class="me-1 mb-0 small">Resolution:</label>
+                            <input type="number" id="resolution" class="form-control text-center"
+                                style="width: 50px; height: 24px; padding: 0 4px; font-size: 12px;"
+                                min="1" max="99" value="2">
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="col-auto d-flex flex-column justify-content-end h-100">
+                            <button id="generateGIF" class="btn btn-primary btn-sm">
+                                <i class="bi bi-film"></i> Render
+                            </button>
+                        </div>
+                        <div class="col-auto d-flex flex-column justify-content-end h-100">
+                            <a id="downloadGIF" class="btn btn-success btn-sm" download="turing-machine.gif">
+                                <i class="bi bi-filetype-gif"></i> Save
+                            </a>
+                        </div>
+                        <div class="col-auto d-flex flex-column justify-content-end h-100">
+                            <button id="cancelGIF" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-x-circle-fill"></i> Cancel
+                            </button>
                         </div>
                     </div>
 
-                    <div id="stepState" class="step-state text-center mb-0"></div>
+                    <!-- GIF Preview -->
+                    <div id="gifContainer" class="text-center" style="display: none;">
+                        <div class="preview-image mb-2">
+                            <img id="gifPreview" class="img-fluid border rounded shadow-sm"
+                                alt="GIF Preview">
+                        </div>
+                    </div>
+
+                    <!-- Status Area -->
+                    <div class="text-center mb-3">
+                        <div id="GIFStatus" class="machineStatus text-medium"></div>
+                    </div>
                 </div>
             </div>
 
             <!-- Controls and Configuration -->
             <div class="row mt-3 align-items-stretch">
-
                 <!-- Configure Model -->
                 <div class="col-md-8 mb-2">
                     <div class="card h-100">
-                        <div class="card-header">Configure Model</div>
-                        <div class="card-body">
+                        <!-- <div class="card-header">Configure Model</div> -->
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <span>Configure Model</span>
+                            <input type="text" id="modelInputName"
+                                class="form-control form-control-sm ms-2 fst-italic"
+                                placeholder="turing_test..."
+                                style="max-width: 200px; font-style: italic;">
+                        </div>
 
+                        <div class="card-body">
                             <!-- Transition Rules -->
                             <div class="mb-3 flex-grow-1">
                                 <label for="rulesEditor" class="form-label">Transition Rules:</label>
-                                <div id="rulesEditor" class="form-control h-100" style="min-height: 250px; white-space: pre-wrap;">INIT | FIND | R
+                                <div id="rulesEditor" class="form-control h-100" style="min-height: 250px; white-space: pre-wrap;">INIT | FIND _ R
 FIND | FIND | R
-FIND _ HALT | R</div>
+FIND + HALT | L</div>
                             </div>
 
                             <!-- Initial Tape -->
                             <div class="mb-3">
                                 <label for="tapeInput" class="form-label">Initial Tape:</label>
-                                <input type="text" id="tapeInput" class="form-control" value="|||||||">
+                                <input type="text" id="tapeInput" class="form-control" value="||||+|||">
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="row mb-0 g-2 mt-auto"> <!-- 🔧 push to bottom -->
+                            <div class="row mb-0 g-2 mt-auto">
                                 <div class="col-3">
                                     <button id="clearRulesBtn" class="btn btn-clear w-100 action-btn bi bi-trash-fill"> Clear</button>
                                 </div>
@@ -393,7 +521,7 @@ FIND _ HALT | R</div>
                                     <button id="copyRulesBtn" class="btn btn-copy w-100 action-btn bi bi-clipboard-fill"> Copy</button>
                                 </div>
                                 <div class="col-3">
-                                    <button id="loadBtn" class="btn btn-load w-100 action-btn bi bi-upload"> Load</button>
+                                    <button id="saveBtn" class="btn btn-save w-100 action-btn bi bi-save"> Save</button>
                                 </div>
                             </div>
                         </div>
@@ -404,8 +532,7 @@ FIND _ HALT | R</div>
                 <div class="col-md-4 mb-2">
                     <div class="card h-100">
                         <div class="card-header">Control Machine</div>
-                        <div class="card-body d-flex flex-column"> <!-- 🔧 flex column -->
-
+                        <div class="card-body d-flex flex-column">
                             <!-- Step Navigation -->
                             <div class="mb-3">
                                 <div class="row align-items-center g-2">
@@ -438,7 +565,7 @@ FIND _ HALT | R</div>
                             </div>
 
                             <!-- Control Buttons -->
-                            <div class="row mb-3 g-2 mt-auto"> <!-- 🔧 align bottom -->
+                            <div class="row mb-3 g-2 mt-auto">
                                 <div class="col-4">
                                     <button id="stepBtn" class="btn btn-step w-100 action-btn bi bi-skip-forward-fill"> Jump</button>
                                 </div>
@@ -456,7 +583,7 @@ FIND _ HALT | R</div>
 
             <!-- Model Results -->
             <div class="card mt-3">
-                <div class="card-header">Model Results</div>
+                <div class="card-header">Model Summary</div>
                 <div class="card-body">
                     <div id="results" class="monospace"></div>
                     <div id="resources" class="monospace mt-2"></div>
@@ -500,10 +627,9 @@ FIND _ HALT | R</div>
 
                             <h6 class="small text-dark mt-3">🔁 Move Directions</h6>
                             <ul class="small text-muted ps-3">
-                                <li><code>L</code> – Move Left</li>
-                                <li><code>R</code> – Move Right</li>
+                                <li><code>L</code> - Move Left</li>
+                                <li><code>R</code> - Move Right</li>
                             </ul>
-
                         </div>
 
                         <!-- Column 3: Configuration & Limits -->
@@ -526,772 +652,1267 @@ FIND _ HALT | R</div>
                     </div>
                 </div>
             </div>
-
         </div>
 
-    <!-- JavaScript Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- JavaScript Libraries -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
-    <!-- Main Application Script -->
-    <script type="module">
-        // Initialize Ace Editor
-        const editor = ace.edit("rulesEditor");
-        editor.setTheme("ace/theme/chrome");
-        editor.session.setMode("ace/mode/text");
-        editor.setOptions({
-            fontSize: "14px",
-            showLineNumbers: true,
-            showGutter: true,
-            highlightActiveLine: true,
-            enableBasicAutocompletion: true,
-            enableLiveAutocompletion: true
-        });
+        <!-- Main Application Script -->
+        <script>
+            // Define TuringConfig class
+            class TuringConfig {
+                static LEFT = "L";
+                static RIGHT = "R";
+                static BLANK = "_";
 
-        // Make editor available globally
-        window.getRulesText = () => editor.getValue();
-        window.setRulesText = (text) => editor.setValue(text);
+                static INIT_STATE = "INIT";
+                static HALT_STATE = "HALT";
+                static COMMENT_PREFIX = "//";
 
-        class TuringConfig {
-            static LEFT = "L";
-            static RIGHT = "R";
-            static BLANK = "_";
+                static MAX_STATES = 1024;
+                static MAX_TAPE_LEN = 1048576;
+                static MAX_STATE_SIZE = 32;
+                static TRANSITION_SIZE = 710000;
 
-            static INIT_STATE = "INIT";
-            static HALT_STATE = "HALT";
-            static COMMENT_PREFIX = "//";
+                static getTimestamp() {
+                    return performance.now() / 1000;
+                }
 
-            static MAX_STATES = 1024;
-            static MAX_TAPE_LEN = 1048576;
-            static MAX_STATE_SIZE = 32;
-            static TRANSITION_SIZE = 710000;
+                static getCurrentMemoryMB() {
+                    return performance.memory ? (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) : 'N/A';
+                }
 
-            static getTimestamp() {
-                return performance.now() / 1000;
-            }
+                parseTransitionRules(transitionRulesStr) {
+                    const transitionsList = [];
+                    const rawRuleList = transitionRulesStr.split("\n");
+                    for (const rawLine of rawRuleList) {
+                        const line = rawLine.trim();
+                        if (!line || line.startsWith("//")) continue;
+                        const cleanedLine = line.split("//")[0].trim();
+                        const values = cleanedLine.split(/\s+/).filter(val => val.trim());
 
-            static getCurrentMemoryMB() {
-                return performance.memory ? (performance.memory.usedJSHeapSize / (1024 * 1024)).toFixed(2) : 'N/A';
-            }
+                        if (values.length !== 5) {
+                            throw new Error(`Invalid transition: "${cleanedLine}". Expected 5 elements, got ${values.length}`);
+                        }
 
-            parseTransitionRules(transitionRulesStr) {
-                const transitionsList = [];
-                const rawRuleList = transitionRulesStr.split("\n");
-                for (const rawLine of rawRuleList) {
-                    const line = rawLine.trim();
-                    if (!line || line.startsWith("//")) continue;
-                    const cleanedLine = line.split("//")[0].trim();
-                    const values = cleanedLine.split(/\s+/).filter(val => val.trim());
+                        const [currentState, currentSymbol, newState, newSymbol, direction] = values;
+                        if (direction !== "L" && direction !== "R") {
+                            throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
+                        }
 
-                    if (values.length !== 5) {
-                        throw new Error(`Invalid transition: "${cleanedLine}". Expected 5 elements, got ${values.length}`);
+                        for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
+                            if (symbol.length !== 1) {
+                                throw new Error(`Invalid ${label}_symbol '${symbol}'. Must be a single character.`);
+                            }
+                        }
+
+                        transitionsList.push([currentState, currentSymbol, newState, newSymbol, direction]);
                     }
 
-                    const [currentState, currentSymbol, newState, newSymbol, direction] = values;
-                    if (direction !== "L" && direction !== "R") {
-                        throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
+                    if (transitionsList.length === 0) {
+                        throw new Error("No valid transition rules found.");
                     }
 
-                    for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
+                    return transitionsList;
+                }
+            }
+
+            // Define MachineLogic class
+            class MachineLogic {
+                constructor(
+                    transitionsList,
+                    initState = TuringConfig.INIT_STATE,
+                    haltState = TuringConfig.HALT_STATE,
+                    blankSymbol = TuringConfig.BLANK) {
+                        this.init_state = initState;
+                        this.halt_state = haltState;
+                        this.blank_symbol = blankSymbol;
+
+                        this.MAX_STATES = TuringConfig.MAX_STATES;
+                        this.MAX_STATE_SIZE = TuringConfig.MAX_STATE_SIZE;
+
+                        this.transitions_list = transitionsList;
+                        this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
+
+                        // Initialize Tape
+                        this.head_position = 0;
+                        this.current_state = initState;
+                        this.tape = {};
+                        this.running = true;
+                        this.input_tape = "";
+                }
+
+                _validateTransition(transition) {
+                    if (transition.length !== 5) {
+                        throw new Error(`Invalid transition: ${transition}. Expected 5 elements: (currentState, currentSymbol, newState, newSymbol, moveDirection).`);
+                    }
+
+                    const [current_state, current_symbol, new_state, new_symbol, direction] = transition;
+
+                    if (direction !== TuringConfig.LEFT && direction !== TuringConfig.RIGHT) {
+                        throw new Error(`Invalid move direction: '${direction}'. Must be 'L' or 'R'.`);
+                    }
+
+                    for (const [symbol, label] of [[current_symbol, "current"], [new_symbol, "new"]]) {
                         if (symbol.length !== 1) {
-                            throw new Error(`Invalid ${label}_symbol '${symbol}'. Must be a single character.`);
+                            throw new Error(`Invalid ${label}_symbol: '${symbol}'. Must be a single character.`);
                         }
                     }
 
-                    transitionsList.push([currentState, currentSymbol, newState, newSymbol, direction]);
-                }
-
-                if (transitionsList.length === 0) {
-                    throw new Error("No valid transition rules found.");
-                }
-
-                return transitionsList;
-            }
-        }
-
-        class MachineLogic {
-            constructor(
-                transitionsList,
-                initState = TuringConfig.INIT_STATE,
-                haltState = TuringConfig.HALT_STATE,
-                blankSymbol = TuringConfig.BLANK) {
-                this.init_state = initState;
-                this.halt_state = haltState;
-                this.blank_symbol = blankSymbol;
-
-                this.MAX_STATES = TuringConfig.MAX_STATES;
-                this.MAX_STATE_SIZE = TuringConfig.MAX_STATE_SIZE;
-
-                this.transitions_list = transitionsList;
-                this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
-
-                // Initialize Tape
-                this.head_position = 0;
-                this.current_state = initState;
-                this.tape = {};
-                this.running = true;
-                this.input_tape = "";
-            }
-
-            _validateTransition(transition) {
-                if (transition.length !== 5) {
-                    throw new Error(`Invalid transition: ${transition}. Expected 5 elements: (currentState, currentSymbol, newState, newSymbol, moveDirection).`);
-                }
-
-                const [current_state, current_symbol, new_state, new_symbol, direction] = transition;
-
-                if (direction !== TuringConfig.LEFT && direction !== TuringConfig.RIGHT) {
-                    throw new Error(`Invalid move direction: '${direction}'. Must be 'L' or 'R'.`);
-                }
-
-                for (const [symbol, label] of [[current_symbol, "current"], [new_symbol, "new"]]) {
-                    if (symbol.length !== 1) {
-                        throw new Error(`Invalid ${label}_symbol: '${symbol}'. Must be a single character.`);
-                    }
-                }
-
-                for (const [state, label] of [[current_state, "current"], [new_state, "new"]]) {
-                    if (state.length > this.MAX_STATE_SIZE) {
-                        throw new Error(`Invalid ${label}_state: ${state} size=${state.length}. State Size must be less than ${this.MAX_STATE_SIZE} characters.`);
-                    }
-                }
-
-                return transition;
-            }
-
-            _buildTransitionDict(transitionsList, initState, haltState) {
-                const transitionDict = {};
-                let hasHaltState = false;
-
-                for (const transition of transitionsList) {
-                    const [currentState, currentSymbol, newState, newSymbol, moveDirection] = this._validateTransition(transition);
-
-                    if (!transitionDict[currentState]) {
-                        transitionDict[currentState] = {};
-                    }
-
-                    if (currentSymbol in transitionDict[currentState]) {
-                        throw new Error(`Duplicate transition for state ${currentState} and symbol ${currentSymbol}`);
-                    }
-
-                    transitionDict[currentState][currentSymbol] = [newState, newSymbol, moveDirection];
-
-                    if (newState === haltState) {
-                        hasHaltState = true;
-                    }
-                }
-
-                if (Object.keys(transitionDict).length > this.MAX_STATES) {
-                    throw new Error(`Too many states: ${Object.keys(transitionDict).length}. Maximum is ${this.MAX_STATES}.`);
-                }
-
-                if (!transitionDict[initState]) {
-                    throw new Error(`Initial state ${initState} not found in the transitions`);
-                }
-
-                if (!hasHaltState) {
-                    throw new Error(`Halt state ${haltState} not found in the transitions`);
-                }
-
-                return transitionDict;
-            }
-
-            _setTape(inputTape) {
-                if (inputTape.includes(" ")) {
-                    throw new Error("Input tape must not contain spaces");
-                }
-
-                this.head_position = 0;
-                this.current_state = this.init_state;
-                this.tape = {};
-                this.input_tape = inputTape;
-
-                for (let i = 0; i < inputTape.length; i++) {
-                    const symbol = inputTape[i];
-                    if (symbol !== this.blank_symbol) {
-                        this.tape[i] = symbol;
-                    }
-                }
-            }
-
-            _getTapeBoundaries(windowSize = 5) {
-                const positions = Object.keys(this.tape).map(Number);
-                let minPos = positions.length > 0 ? Math.min(...positions) : this.head_position - windowSize;
-                let maxPos = positions.length > 0 ? Math.max(...positions) : this.head_position + windowSize;
-
-                minPos = Math.min(minPos, this.head_position) - windowSize;
-                maxPos = Math.max(maxPos, this.head_position) + windowSize;
-                return [minPos, maxPos];
-            }
-
-            _printTapeState(visualize = true) {
-                const [minPos, maxPos] = this._getTapeBoundaries();
-                const headPosInWindow = this.head_position - minPos;
-
-                let tapeStr = "";
-                for (let i = minPos; i <= maxPos; i++) {
-                    tapeStr += this.tape[i] ?? this.blank_symbol;
-                }
-
-                const pointerStr = `${" ".repeat(headPosInWindow)}^`;
-                const tape_state = `[${this.stepCount}]: ${this.current_state}`
-                const printedState = [tapeStr, pointerStr, tape_state, ""];
-
-                if (visualize) {
-                    console.log(printedState.join("\n"));
-                }
-
-                return tapeStr.replace(new RegExp(`^${this.blank_symbol}+|${this.blank_symbol}+$`, 'g'), '');
-            }
-
-            _stepLogic() {
-                const stateTransitions = this.transitions_dict[this.current_state];
-                if (!stateTransitions) {
-                    throw new Error(`No transitions for state ${this.current_state} with input tape ${this.input_tape}`);
-                }
-
-                const currentSymbol = this.tape[this.head_position] ?? this.blank_symbol;
-                const transition = stateTransitions[currentSymbol];
-                if (!transition) {
-                    throw new Error(`No transition for symbol '${currentSymbol}' in state ${this.current_state} with input tape ${this.input_tape}`);
-                }
-
-                const [newState, newSymbol, moveDirection] = transition;
-
-                if (newSymbol === this.blank_symbol) {
-                    delete this.tape[this.head_position];
-                } else {
-                    this.tape[this.head_position] = newSymbol;
-                }
-
-                const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
-                this.current_state = newState;
-                this.head_position += shift;
-            }
-
-            runLogic(inputTape, maxSteps = 1_000_000, visualize = false) {
-                this.input_tape = inputTape;
-                this._setTape(inputTape);
-                this._printTapeState(visualize);
-
-                this.stepCount = 0;
-                let tape = "";
-                while (this.running && this.stepCount < maxSteps) {
-                    if (this.current_state === this.halt_state) {
-                        this.running = false;
-                        if (visualize) {
-                            console.log(`HALTED after ${this.stepCount} steps`);
+                    for (const [state, label] of [[current_state, "current"], [new_state, "new"]]) {
+                        if (state.length > this.MAX_STATE_SIZE) {
+                            throw new Error(`Invalid ${label}_state: ${state} size=${state.length}. State Size must be less than ${this.MAX_STATE_SIZE} characters.`);
                         }
-                        continue;
                     }
 
-                    this._stepLogic();
-                    tape = this._printTapeState(visualize);
-                    this.stepCount++;
+                    return transition;
                 }
 
-                return [tape, this.stepCount, this.transitions_list.length];
-            }
+                _buildTransitionDict(transitionsList, initState, haltState) {
+                    const transitionDict = {};
+                    let hasHaltState = false;
 
-            async runIncrementally(inputTape, visualize = true, maxSteps = 1_000_000) {
-                console.log("Turing Machine Initialized:");
-                console.log("Enter [space] to step, number to step n times, or q to quit:\n")
-                this.stepCount = 0;
-                let tape = "";
+                    for (const transition of transitionsList) {
+                        const [currentState, currentSymbol, newState, newSymbol, moveDirection] = this._validateTransition(transition);
 
-                this.input_tape = inputTape;
-                this._setTape(inputTape);
-                this._printTapeState(visualize);
-
-                while (this.running && this.stepCount < maxSteps) {
-                    if (this.current_state === this.halt_state) {
-                        this.running = false;
-                        if (visualize) {
-                            console.log(`HALTED after ${this.stepCount} steps`);
+                        if (!transitionDict[currentState]) {
+                            transitionDict[currentState] = {};
                         }
-                        break;
-                    }
-                    const key = await new Promise(resolve => {
-                        process.stdin.resume();
-                        process.stdin.setEncoding('utf8');
-                        process.stdin.once('data', data => resolve(data.trim()));
-                    });
 
-                    if (key === 'q') {
-                        console.log("Machine Stopped Manually");
-                        break;
-                    } else if (key === '' || key === ' ') {
+                        if (currentSymbol in transitionDict[currentState]) {
+                            throw new Error(`Duplicate transition for state ${currentState} and symbol ${currentSymbol}`);
+                        }
+
+                        transitionDict[currentState][currentSymbol] = [newState, newSymbol, moveDirection];
+
+                        if (newState === haltState) {
+                            hasHaltState = true;
+                        }
+                    }
+
+                    if (Object.keys(transitionDict).length > this.MAX_STATES) {
+                        throw new Error(`Too many states: ${Object.keys(transitionDict).length}. Maximum is ${this.MAX_STATES}.`);
+                    }
+
+                    if (!transitionDict[initState]) {
+                        throw new Error(`Initial state ${initState} not found in the transitions`);
+                    }
+
+                    if (!hasHaltState) {
+                        throw new Error(`Halt state ${haltState} not found in the transitions`);
+                    }
+
+                    return transitionDict;
+                }
+
+                _setTape(inputTape) {
+                    if (inputTape.includes(" ")) {
+                        throw new Error("Input tape must not contain spaces");
+                    }
+
+                    this.tape = {};
+                    this.input_tape = inputTape;
+                    this.headMove = "N";
+                    this.head_position = 0;
+                    this.current_state = this.init_state;
+
+                    for (let i = 0; i < inputTape.length; i++) {
+                        const symbol = inputTape[i];
+                        if (symbol !== this.blank_symbol) {
+                            this.tape[i] = symbol;
+                        }
+                    }
+                }
+
+                _getTapeBoundaries(windowSize = 5) {
+                    const positions = Object.keys(this.tape).map(Number);
+                    let minPos = positions.length > 0 ? Math.min(...positions) : this.head_position - windowSize;
+                    let maxPos = positions.length > 0 ? Math.max(...positions) : this.head_position + windowSize;
+
+                    minPos = Math.min(minPos, this.head_position) - windowSize;
+                    maxPos = Math.max(maxPos, this.head_position) + windowSize;
+                    return [minPos, maxPos];
+                }
+
+                _printTapeState(visualize = true) {
+                    const [minPos, maxPos] = this._getTapeBoundaries();
+                    const headPosInWindow = this.head_position - minPos;
+
+                    let tapeStr = "";
+                    for (let i = minPos; i <= maxPos; i++) {
+                        tapeStr += this.tape[i] ?? this.blank_symbol;
+                    }
+
+                    const pointerStr = `${" ".repeat(headPosInWindow)}^`;
+                    const tape_state = `[${this.stepCount}]: ${this.current_state}`
+                    const printedState = [tapeStr, pointerStr, tape_state, ""];
+
+                    if (visualize) {
+                        console.log(printedState.join("\n"));
+                    }
+
+                    return tapeStr.replace(new RegExp(`^${this.blank_symbol}+|${this.blank_symbol}+$`, 'g'), '');
+                }
+
+                _stepLogic() {
+                    const stateTransitions = this.transitions_dict[this.current_state];
+                    if (!stateTransitions) {
+                        throw new Error(`No transitions for state ${this.current_state} with input tape ${this.input_tape}`);
+                    }
+
+                    const currentSymbol = this.tape[this.head_position] ?? this.blank_symbol;
+                    const transition = stateTransitions[currentSymbol];
+                    if (!transition) {
+                        throw new Error(`No transition for symbol '${currentSymbol}' in state ${this.current_state} with input tape ${this.input_tape}`);
+                    }
+
+                    const [newState, newSymbol, moveDirection] = transition;
+
+                    if (newSymbol === this.blank_symbol) {
+                        delete this.tape[this.head_position];
+                    } else {
+                        this.tape[this.head_position] = newSymbol;
+                    }
+
+                    const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
+                    this.current_state = newState;
+                    this.head_position += shift;
+                    this.headMove = moveDirection;
+                }
+
+                runLogic(inputTape, maxSteps = 1_000_000, visualize = false) {
+                    this.input_tape = inputTape;
+                    this._setTape(inputTape);
+                    this._printTapeState(visualize);
+
+                    this.stepCount = 0;
+                    let tape = "";
+                    while (this.running && this.stepCount < maxSteps) {
+                        if (this.current_state === this.halt_state) {
+                            this.running = false;
+                            if (visualize) {
+                                console.log(`HALTED after ${this.stepCount} steps`);
+                            }
+                            continue;
+                        }
+
                         this._stepLogic();
-                        this.stepCount++;
                         tape = this._printTapeState(visualize);
-                    } else if (/^\d+$/.test(key)) {
-                        const stepsToRun = parseInt(key, 10);
-                        for (let i = 0; i < stepsToRun; i++) {
-                            if (this.current_state === this.halt_state || !this.running) break;
+                        this.stepCount++;
+                    }
+
+                    return [tape, this.stepCount, this.transitions_list.length];
+                }
+
+                async runIncrementally(inputTape, visualize = true, maxSteps = 1_000_000) {
+                    console.log("Turing Machine Initialized:");
+                    console.log("Enter [space] to step, number to step n times, or q to quit:\n")
+                    this.stepCount = 0;
+                    let tape = "";
+
+                    this.input_tape = inputTape;
+                    this._setTape(inputTape);
+                    this._printTapeState(visualize);
+
+                    while (this.running && this.stepCount < maxSteps) {
+                        if (this.current_state === this.halt_state) {
+                            this.running = false;
+                            if (visualize) {
+                                console.log(`HALTED after ${this.stepCount} steps`);
+                            }
+                            break;
+                        }
+                        const key = await new Promise(resolve => {
+                            process.stdin.resume();
+                            process.stdin.setEncoding('utf8');
+                            process.stdin.once('data', data => resolve(data.trim()));
+                        });
+
+                        if (key === 'q') {
+                            console.log("Machine Stopped Manually");
+                            break;
+                        } else if (key === '' || key === ' ') {
                             this._stepLogic();
                             this.stepCount++;
                             tape = this._printTapeState(visualize);
+                        } else if (/^\d+$/.test(key)) {
+                            const stepsToRun = parseInt(key, 10);
+                            for (let i = 0; i < stepsToRun; i++) {
+                                if (this.current_state === this.halt_state || !this.running) break;
+                                this._stepLogic();
+                                this.stepCount++;
+                                tape = this._printTapeState(visualize);
+                            }
+                        } else {
+                            console.log(`Unrecognized key: '${key}'`);
                         }
-                    } else {
-                        console.log(`Unrecognized key: '${key}'`);
                     }
+
+                    return [tape, this.stepCount, this.transitions_list.length];
                 }
 
-                return [tape, this.stepCount, this.transitions_list.length];
             }
 
-        }
-
-        class Simulator_GUI {
-            constructor() {
-                this.init_time = TuringConfig.getTimestamp();
-                this.MAX_STEPS = 0;
-                this.BASE_STEP = 0;
-                this.DELAY = 0;
-                this.step_count = 0;
-                this.running = false;
-                this.auto_run_timeout = null;
-                this.history = [];
-
-                this.initElements();
-                this.setupEventListeners();
-                this.load();
-            }
-
-            initElements() {
-                this.gotoBtn = document.getElementById('gotoBtn');
-                this.loadBtn = document.getElementById('loadBtn');
-                this.maxSteps = document.getElementById('maxSteps');
-                this.resetBtn = document.getElementById('resetBtn');
-                this.gotoStep = document.getElementById('gotoStep');
-                this.stepEntry = document.getElementById('stepEntry');
-                this.tapeInput = document.getElementById('tapeInput');
-                this.rulesText = document.getElementById('rulesText');
-                this.stepState = document.getElementById('stepState');
-                this.delayEntry = document.getElementById('delayEntry');
-                this.tapeDisplay = document.getElementById('tapeDisplay');
-                this.RunPauseBtn = document.getElementById('RunPauseBtn');
-                this.copyRulesBtn = document.getElementById('copyRulesBtn');
-                this.historySlider = document.getElementById('historySlider');
-                this.machineStatus = document.getElementById('machineStatus');
-                this.clearRulesBtn = document.getElementById('clearRulesBtn');
-                this.stepBtn = document.getElementById('stepBtn');
-                this.results = document.getElementById('results');
-                this.uploadBtn = document.getElementById('uploadBtn');
-                this.fileInput = document.getElementById('fileInput');
-                this.resources = document.getElementById('resources');
-                this.ControlBtn = document.getElementById('ControlBtn');
-            }
-
-            setupEventListeners() {
-                const withScrollToTop = (callback) => {
-                    return (...args) => {
-                        callback(...args);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    };
-                };
-
-                // Connect upload button to file input
-                this.uploadBtn.addEventListener('click', () => this.fileInput.click());
-                this.fileInput.addEventListener('change', (event) => this.uploadRules(event));
-
-                this.loadBtn.addEventListener('click', withScrollToTop(() => this.load()));
-                this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
-
-                this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
-                this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
-
-                this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
-                this.clearRulesBtn.addEventListener('click', withScrollToTop(() => this.clearRules()));
-
-                this.historySlider.addEventListener('input', withScrollToTop(() =>
-                    this.seekHistory(parseInt(this.historySlider.value))
-                ));
-
-                this.RunPauseBtn.addEventListener('click', () => {
-                    this.ControlBtn.click();
-                });
-
-                this.ControlBtn.addEventListener('click', () => {
-                    if (this.running) {
-                        this.pause();
-                    } else if (this.cpu?.current_state === this.cpu?.halt_state) {
-                        this.reset();
-                    } else {
-                        this.run();
-                    }
-                });
-
-                this.updateControlButton('run');
-            }
-
-            uploadRules(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-
-                reader.onload = (e) => {
-                    try {
-                        const text = e.target.result.trim();
-                        window.setRulesText(text);
-                        this.load(); // auto-load after upload
-                    } catch (error) {
-                        console.error("Error loading file:", error);
-                        this.updateMachineStatus("Error loading file", "text-danger");
-                        alert(`Error loading file: ${error.message}`);
-                    }
-                };
-
-                reader.onerror = () => {
-                    this.updateMachineStatus("Error reading file", "text-danger");
-                    alert("Error reading file");
-                };
-
-                reader.readAsText(file);
-            }
-
-            load() {
-                try {
-                    const rules = window.getRulesText(); // Using the Ace Editor content
-                    const transitions = new TuringConfig().parseTransitionRules(rules);
-                    this.initial_tape = this.tapeInput.value || "||||";
+            // Define Simulator_GUI class
+            class Simulator_GUI {
+                constructor() {
                     this.init_time = TuringConfig.getTimestamp();
-                    this.cpu = new MachineLogic(transitions);
-                    this.cpu._setTape(this.initial_tape);
-
-                    this.step_count = 0;
+                    this.modelName = "turing_test";
+                    this.auto_run_timeout = null;
                     this.running = false;
-                    this.updateControlButton('run');
-                    this.updateMachineStatus("Machine Loaded", "text-secondary");
-                    this.stepBtn.disabled = false;
+                    this.history = [];
+                    this.MAX_STEPS = 0;
+                    this.BASE_STEP = 0;
+                    this.DELAY = 0;
+                    this.step_count = 0;
 
-                    this.history = [{
-                        tape: { ...this.cpu.tape },
-                        head: this.cpu.head_position,
-                        state: this.cpu.current_state
-                    }];
-
-                    this.updateUI();
-                } catch (error) {
-                    console.error("Load error:", error);
-                    this.updateMachineStatus(error, "text-danger");
-                    alert(`Error during load: ${error.message}`);
+                    this.initElements();
+                    this.setupEventListeners();
+                    this.reset();
                 }
-            }
 
-            reset() {
-                clearTimeout(this.auto_run_timeout);
-                try {
-                    if (!this.initial_tape) {
-                        const status = "Initial configuration not loaded. Click 'Load' first."
-                        this.updateMachineStatus(status, "text-warning")
-                        alert(status);
+                initElements() {
+                    const ids = [
+                        'gotoBtn', 'maxSteps', 'resetBtn', 'gotoStep', 'stepEntry', 'saveBtn',
+                        'tapeInput', 'rulesText', 'stepState', 'delayEntry', 'tapeDisplay',
+                        'RunPauseBtn', 'copyRulesBtn', 'historySlider', 'machineStatus',
+                        'clearRulesBtn', 'stepBtn', 'results', 'uploadBtn', 'fileInput',
+                        'resources', 'ControlBtn', 'showGIFControls', 'generateGIF',
+                        'gifCard', 'gifContainer', 'gifPreview', 'GIFStatus',
+                        'cancelGIF', 'modelInputName',
+                    ];
+
+                    for (const id of ids) {
+                        this[id] = document.getElementById(id);
+                    }
+                }
+
+                setupEventListeners() {
+                    const withScrollToTop = (callback) => {
+                        return (...args) => {
+                            callback(...args);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        };
+                    };
+
+                    this.modelInputName.addEventListener('input', () => {
+                        this.modelName = this.modelInputName.value.trim();
+                    });
+
+                    // Upload and load/reset
+                    this.uploadBtn.addEventListener('click', () => this.fileInput.click());
+                    this.fileInput.addEventListener('change', (e) => this.uploadRules(e));
+
+                    // Rules and state
+                    this.copyRulesBtn.addEventListener('click', () => this.copyRules());
+                    this.clearRulesBtn.addEventListener('click', () => this.clearRules());
+                    this.saveBtn.addEventListener("click", () => this.downloadRules());
+
+                    // Navigation and step controls
+                    this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
+                    this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
+                    this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
+                    this.historySlider.addEventListener('input', withScrollToTop(() =>
+                        this.seekHistory(parseInt(this.historySlider.value))
+                    ));
+
+                    // Run/Pause logic
+                    this.RunPauseBtn.addEventListener('click', withScrollToTop(() => this.ControlBtn.click()));
+                    this.ControlBtn.addEventListener('click', () => {
+                        if (this.running) {
+                            this.pause();
+                        } else if (this.cpu?.current_state === this.cpu?.halt_state) {
+                            this.reset();
+                        } else {
+                            this.run();
+                        }
+                    });
+
+                    this.updateControlButton('run');
+
+                    // Show GIF card
+                    this.showGIFControls.addEventListener("click", () => {
+                        if (this.history?.length >= 2) {
+                            this.gifCard.style.display = "block";
+                        } else {
+                            alert("Not enough history to generate a GIF. Please run the machine first.");
+                        }
+                    });
+
+                    // Generate GIF from captured frames
+                    this.generateGIF.addEventListener("click", () => this.generateGIFFromHistory());
+
+                    this.cancelGIF.addEventListener("click", () => {
+                        if (this.gifBuilder.isBuilding){
+                            this.gifBuilder.cancel()
+                            this.setAllButtonsDisabled(false)
+                        }
+                    });
+                }
+
+                uploadRules(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        try {
+                            const text = e.target.result.trim();
+                            window.setRulesText(text);
+                            this.stepBtn.disabled = true;
+                            this.RunPauseBtn.disabled = true;
+                            this.ControlBtn.disabled = true;
+                        } catch (error) {
+                            console.error("Error loading file:", error);
+                            this.updateMachineStatus("Error loading file", "text-danger");
+                            alert(`Error loading file: ${error.message}`);
+                        }
+                    };
+
+                    reader.onerror = () => {
+                        this.updateMachineStatus("Error reading file", "text-danger");
+                        alert("Error reading file");
+                    };
+
+                    reader.readAsText(file);
+                }
+
+                reset() {
+                    try {
+                        clearTimeout(this.auto_run_timeout);
+                        const rules = window.getRulesText(); // Using the Ace Editor content
+                        const transitions = new TuringConfig().parseTransitionRules(rules);
+                        this.initial_tape = this.tapeInput.value;
+                        this.init_time = TuringConfig.getTimestamp();
+                        this.cpu = new MachineLogic(transitions);
+                        this.cpu._setTape(this.initial_tape);
+
+                        this.step_count = 0;
+                        this.running = false;
+                        this.updateControlButton('run');
+                        this.updateMachineStatus(`Model ${this.modelName} Loaded`, "text-secondary");
+                        this.stepBtn.disabled = false;
+                        this.RunPauseBtn.disabled = false;
+                        this.ControlBtn.disabled = false;
+                        // this.gifBuilder.resetGIFCard();
+                        this.history = [{
+                            tape: { ...this.cpu.tape },
+                            head: this.cpu.head_position,
+                            state: this.cpu.current_state,
+                            move: "N",
+                        }];
+
+                        this.updateUI();
+
+                        // Update results
+                        this.updateResults();
+                    } catch (error) {
+                        console.error("Load error:", error);
+                        this.updateMachineStatus(error, "text-danger");
+                        alert(`Error during load: ${error.message}`);
+                    }
+                }
+
+                step(printStep = true) {
+                    try {
+                        const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
+                        const max_allowed = parseInt(this.maxSteps.value) || this.MAX_STEPS;
+                        if (printStep) {
+                            this.updateMachineStatus(`Machine ran for ${steps_to_run} steps`, "text-primary");              // When started
+                        }
+                        for (let i = 0; i < steps_to_run; i++) {
+                            if (this.step_count >= max_allowed) {
+                                this.updateMachineStatus(`Max steps (${max_allowed}) reached`, "text-danger");
+                                this.pause(false);
+                                break;
+                            }
+
+                            if (this.cpu.current_state === this.cpu.halt_state) {
+                                this.HALT();
+                                break;
+                            }
+
+                            try {
+                                this.cpu._stepLogic();
+                                this.step_count++;
+                                this.history[this.step_count -1]['move'] = this.cpu.headMove;
+
+                                this.history.push({
+                                    tape: { ...this.cpu.tape },
+                                    head: this.cpu.head_position,
+                                    state: this.cpu.current_state,
+                                    move: "N",
+                                });
+
+                                this.updateUI();
+
+                                // Update results
+                                this.updateResults();
+                            } catch (error) {
+                                const textContent = `Machine STUCK | After ${this.step_count} steps`;
+                                this.updateMachineStatus(textContent, "text-danger");
+                                this.pause(false);
+                                throw error;
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Step error:", error);
+                        this.updateMachineStatus(error, "text-danger");
+                        alert(`Error during step: ${error.message}`);
+                    }
+                }
+
+                pause(printPause = true) {
+                    if (printPause) {
+                        this.updateMachineStatus(`Machine Paused after ${this.step_count} steps`, "text-warning");
+                    }
+                    this.running = false;
+                    clearTimeout(this.auto_run_timeout);
+                    this.updateControlButton('run');
+                    this.stepBtn.disabled = false;
+                }
+
+                HALT() {
+                    this.running = false;
+                    this.stepBtn.disabled = true;
+                    this.RunPauseBtn.disabled = true
+
+                    this.updateControlButton('reset');
+                    const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
+                    this.updateMachineStatus(textContent, "text-success");    // On halt
+                }
+
+                run() {
+                    this.running = true;
+                    this.stepBtn.disabled = true;
+
+                    this.updateControlButton('pause');
+                    this.autoStep();
+                }
+
+                autoStep() {
+                    if (!this.running) return;
+                    if (this.cpu.current_state === this.cpu.halt_state) {
+                        this.HALT();
                         return;
                     }
-                    this.init_time = TuringConfig.getTimestamp();
-                    this.cpu._setTape(this.initial_tape);
-                    this.step_count = 0;
-                    this.running = false;
-                    this.stepBtn.disabled = false;
-                    this.RunPauseBtn.disabled = false;
-                    this.updateControlButton('run');
-                    this.updateMachineStatus("Machine RESET", "text-secondary");
+                    this.updateMachineStatus("Machine AutoRun", "text-primary");              // When started
 
-                    this.history = [{
-                        tape: { ...this.cpu.tape },
-                        head: this.cpu.head_position,
-                        state: this.cpu.current_state
-                    }];
-                    this.updateUI();
-                } catch (error) {
-                    console.error("Reset error:", error);
-                    this.updateMachineStatus(error, "text-danger");
-                    alert(`Error during reset: ${error.message}`);
+                    this.step(false);
+
+                    const delay = parseInt(this.delayEntry.value) || this.DELAY;
+                    this.auto_run_timeout = setTimeout(() => this.autoStep(), delay);
                 }
-            }
 
-            step(printStep = true) {
-                try {
-                    const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
-                    const max_allowed = parseInt(this.maxSteps.value) || this.MAX_STEPS;
-                    if (printStep) {
-                        this.updateMachineStatus(`Machine ran for ${steps_to_run} steps`, "text-primary");              // When started
+                seekHistory(step) {
+                    step = parseInt(step);
+                    if (isNaN(step)) return;
+
+                    if (step < 0 || step >= this.history.length) {
+                        return;
                     }
-                    for (let i = 0; i < steps_to_run; i++) {
-                        if (this.step_count >= max_allowed) {
-                            this.updateMachineStatus(`Max steps (${max_allowed}) reached`, "text-danger");
-                            this.pause(false);
-                            break;
+
+                    const snapshot = this.history[step];
+                    this.cpu.tape = { ...snapshot.tape };
+                    this.cpu.head_position = snapshot.head;
+                    this.cpu.current_state = snapshot.state;
+                    this.step_count = step;
+                    this.updateUI();
+                }
+
+                goToStep() {
+                    const step = parseInt(this.gotoStep.value);
+                    if (isNaN(step)) {
+                        alert("Please enter a valid step number");
+                        return;
+                    }
+
+                    if (step < 0 || step > this.history.length - 1) {
+                        alert(`Step must be between 0 and ${this.history.length - 1}`);
+                        return;
+                    }
+
+                    this.historySlider.value = step;
+                    this.seekHistory(step);
+                }
+
+                updateUI() {
+                    // Update tape display
+                    this.tapeDisplay.innerHTML = "";
+
+                    const positions = Object.keys(this.cpu.tape).map(Number);
+                    const min_pos = positions.length > 0 ? Math.min(...positions) : 0;
+                    const max_pos = positions.length > 0 ? Math.max(...positions) : 0;
+
+                    // Show at least 5 cells before and after the head position
+                    const start_pos = Math.min(min_pos, this.cpu.head_position) - 5;
+                    const end_pos = Math.max(max_pos, this.cpu.head_position) + 5;
+
+                    for (let pos = start_pos; pos <= end_pos; pos++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'tape-cell';
+                        cell.textContent = this.cpu.tape[pos] !== undefined ? this.cpu.tape[pos] : this.cpu.blank_symbol;
+                        if (pos === this.cpu.head_position) {
+                            cell.classList.add('active');
                         }
-                        if (this.cpu.current_state === this.cpu.halt_state) {
-                            this.HALT();
+                        this.tapeDisplay.appendChild(cell);
+                    }
+                    // Scroll the active cell horizontally without affecting vertical position
+                    const activeCell = this.tapeDisplay.querySelector('.active');
+                    if (activeCell) {
+                        activeCell.scrollIntoView({
+                            behavior: 'auto',
+                            block: 'nearest',  // This prevents vertical scrolling
+                            inline: 'center'   // This handles horizontal scrolling
+                        });
+                    }
+
+                    // Restore vertical scroll position
+                    window.scrollTo(0, scrollY);
+
+                    // Update status
+                    this.historySlider.max = this.history.length - 1;
+                    this.historySlider.value = this.step_count;
+                    this.gotoStep.value = this.step_count;
+
+                    // Update step state display
+                    this.updateStepState();
+
+                }
+
+                updateResults() {
+                    this.cpu.stepCount = this.step_count;
+                    const final_tape = this.cpu._printTapeState();
+                    const resources_used = [
+                        `    Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
+                        ` Memory used: ${TuringConfig.getCurrentMemoryMB()}MB`
+                    ];
+
+                    const results = [
+                        `Initial Tape: '${this.initial_tape}'`,
+                        ` Result Tape: '${final_tape}'`,
+                        ` Steps Count: ${this.step_count}`,
+                        ` Total Rules: ${this.cpu.transitions_list.length}`,
+                        ...resources_used
+                    ];
+
+                    this.results.innerHTML = results.join('<br>');
+                }
+
+                updateStepState() {
+                    const step = parseInt(this.historySlider.value);
+                    const prev = step > 0 ? this.history[step - 1].state : "--";
+                    const curr = this.history[step].state;
+                    const next = step + 1 < this.history.length ? this.history[step + 1].state : 
+                        (step === this.step_count ? "--" : "--");
+                    this.stepState.innerHTML = ` Step [${step}]: ${prev} <- <span class="tape-current">${curr}</span> -> ${next}`;
+                }
+
+                updateControlButton(state) {
+                    const btn_ctrl = this.ControlBtn;
+                    btn_ctrl.className = 'control-btn'; // Reset classes
+
+                    const btn_rp = this.RunPauseBtn;
+                    btn_rp.className = 'btn w-100 action-btn';
+
+                    switch(state) {
+                        case 'run':
+                            btn_ctrl.classList.add('btn-run');
+                            btn_rp.classList.add('btn-run');
+                            btn_ctrl.innerHTML = '<i class="bi bi-play-fill"></i>';
+                            btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
                             break;
+                        case 'pause':
+                            btn_ctrl.classList.add('btn-pause');
+                            btn_rp.classList.add('btn-pause');
+                            btn_ctrl.innerHTML = '<i class="bi bi-pause-fill"></i>';
+                            btn_rp.innerHTML = '<i class="bi bi-pause-fill"></i>Pause';
+                            break;
+                        case 'reset':
+                            btn_ctrl.classList.add('btn-reset');
+                            btn_rp.classList.add('btn-run');
+                            btn_ctrl.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                            btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
+                            break;
+                    }
+                }
+
+                updateMachineStatus(text, colorClass = "text-primary") {
+                    const statusEl = document.getElementById("machineStatus");
+                    statusEl.className = `machineStatus fw-bold text-center ${colorClass}`;
+                    statusEl.textContent = text;
+                }
+
+                setAllButtonsDisabled(disabled) {
+                    document.querySelectorAll('button:not(#cancelGIF)').forEach(btn => {
+                        btn.disabled = disabled;
+                    });
+                }
+
+                async generateGIFFromHistory() {
+                    try {
+                        this.gifContainer.style.display = 'block';
+                        this.setAllButtonsDisabled(true);
+
+                        // Initialize GIFBuilder
+                        if (!this.gifBuilder) {
+                            this.gifBuilder = new GIFBuilder(
+                                this.tapeDisplay, this.GIFStatus, this.modelName,
+                            );
                         }
 
+                        // Generate GIF
+                        const blob = await this.gifBuilder.buildFromHistory(
+                            this.history, (step) => this.seekHistory(step)
+                        );
+
+                    } catch (error) {
+                        console.error("GIF generation error:", error);
+                        this.gifProgress.textContent = `Error: ${error.message}`;
+                    } finally {
+                        this.setAllButtonsDisabled(false);
+                    }
+                }
+
+                copyRules() {
+                    const rules = window.getRulesText();
+
+                    if (!rules.trim()) {
+                        alert("No rules to copy");
+                        return;
+                    }
+
+                    navigator.clipboard.writeText(rules)
+                        .then(() => alert("Transition rules copied to clipboard"))
+                        .catch(err => {
+                            console.error("Failed to copy rules:", err);
+                            alert("Failed to copy rules. Please try again.");
+                        });
+                }
+
+                clearRules() {
+                    if (confirm("Are you sure you want to clear all transition rules?")) {
+                        window.setRulesText("");
+                    }
+                }
+
+                downloadRules() {
+                    const rulesText = window.getRulesText(); // Get current rules from Ace or text storage
+                    const blob = new Blob([rulesText], { type: "text/plain" });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `${this.modelName}.txt`;
+                    a.style.display = "none";
+
+                    document.body.appendChild(a);
+                    a.click();
+
+                    // Cleanup
+                    setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                    }, 100);
+                }
+
+                toJSON() {
+                    return {
+                        step_count: this.step_count,
+                        running: this.running,
+                        initial_tape: this.initial_tape,
+                        history: this.history,
+                        transitions: this.cpu?.transitions,
+                        head_position: this.cpu?.head_position,
+                        current_state: this.cpu?.current_state,
+                        halt_state: this.cpu?.halt_state,
+                        tape: this.cpu?.tape,
+                        rulesText: window.getRulesText(), // From Ace Editor or wherever you're storing rules
+                    };
+                }
+
+                downloadJSON() {
+                    const data = this.toJSON();
+                    const jsonStr = JSON.stringify(data, null, 2); // Pretty-print
+                    const blob = new Blob([jsonStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${this.modelName}.json`;
+                    a.click();
+
+                    URL.revokeObjectURL(url);
+                }
+
+                uploadState(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
                         try {
-                            this.cpu._stepLogic();
-                            this.step_count++;
+                            const json = JSON.parse(e.target.result);
+                            if (!json || typeof json !== "object") throw new Error("Invalid file format");
 
-                            this.history.push({
+                            // Set rules text from saved string
+                            window.setRulesText(json.rulesText || "");
+
+                            // Restore machine state
+                            this.initial_tape = json.initial_tape || "";
+                            this.cpu = new MachineLogic(json.transitions || []);
+                            this.cpu._setTape(this.initial_tape);
+                            this.cpu.head_position = json.head_position || 0;
+                            this.cpu.current_state = json.current_state || "q0";
+                            this.cpu.halt_state = json.halt_state || "halt";
+                            this.cpu.tape = json.tape || {};
+
+                            this.step_count = json.step_count || 0;
+                            this.running = false; // Always reset running state
+
+                            this.history = json.history || [{
                                 tape: { ...this.cpu.tape },
                                 head: this.cpu.head_position,
-                                state: this.cpu.current_state
-                            });
+                                state: this.cpu.current_state,
+                                move: "N",
+                            }];
 
+                            this.updateControlButton('run');
+                            this.stepBtn.disabled = false;
+                            this.RunPauseBtn.disabled = false;
                             this.updateUI();
+                            this.updateResults();
+                            this.updateMachineStatus("Machine state loaded", "text-success");
 
                         } catch (error) {
-                            const textContent = `Machine STUCK | After ${this.step_count} steps`;
-                            this.updateMachineStatus(textContent, "text-danger");
-                            this.pause(false);
-                            throw error;
+                            console.error("Error loading state file:", error);
+                            this.updateMachineStatus("Invalid or corrupted state file", "text-danger");
+                            alert(`Error loading file: ${error.message}`);
+                        }
+                    };
+
+                    reader.onerror = () => {
+                        this.updateMachineStatus("Error reading file", "text-danger");
+                        alert("Error reading file");
+                    };
+
+                    reader.readAsText(file);
+                }
+
+            }
+
+            // Define GIFBuilder class
+            class GIFBuilder {
+                constructor(tapeDisplay, progressElement, gifName) {
+                    this.validateElements(tapeDisplay, progressElement, gifName);
+
+                    this.tapeDisplay = tapeDisplay;
+                    this.progressElement = progressElement;
+                    this.isBuilding = false;
+                    this.gif = null;
+                    this._initialTapeString = '';
+                    this.frameBgColor = "#ffffff";
+                    this.gifName = gifName;
+
+                    this.initTempContainer();
+                }
+
+                validateElements(...elements) {
+                    elements.forEach(el => {
+                        if (!el) throw new Error('Required DOM elements not found');
+                    });
+                }
+
+                initTempContainer() {
+                    this.tempContainer = document.createElement('div');
+                    Object.assign(this.tempContainer.style, {
+                        position: 'fixed',
+                        left: '-9999px',
+                        top: '0',
+                        zIndex: '9999'
+                    });
+                    document.body.appendChild(this.tempContainer);
+                }
+
+                _initGIF() {
+                    this.CELL_WIDTH = 44;
+                    this.GIF_HEIGHT = 200;
+                    this.GIF_WIDTH = this.VISIBLE_CELLS * this.CELL_WIDTH;
+                    this.midpoint = Math.floor(this.VISIBLE_CELLS / 2) - 1;
+
+                    this.gif = new GIF({
+                        workers: 5,
+                        quality: 10, // Increased quality (1-10)
+                        width: this.GIF_WIDTH * this.RESOLUTION_SCALE, // Render at higher resolution
+                        height: this.GIF_HEIGHT * this.RESOLUTION_SCALE, // Render at higher resolution
+                        workerScript: './gif.worker.js',
+                        dither: false, // Disable dithering for sharper images
+                        transparent: null, // No transparency
+                        background: this.frameBgColor
+                    });
+                }
+
+                async buildFromHistory(history, seekCallback) {
+                    if (this.isBuilding) throw new Error("GIF generation already in progress");
+                    if (!Array.isArray(history) || history.length < 2) {
+                        throw new Error("Not enough history to generate GIF");
+                    }
+                    this.gifColor = document.getElementById('gifColor').value;
+                    this.VISIBLE_CELLS = ((parseInt(document.getElementById('visibleCells').value) || 15) | 1);
+                    this.RESOLUTION_SCALE = (parseInt(document.getElementById('resolution').value))
+
+                    this.isBuilding = true;
+                    this.setupUI();
+
+                    try {
+                        this._initGIF();
+                        await this._processFrames(history, seekCallback);
+                        return await this._finalizeGIF(history.length);
+                    } catch (error) {
+                        this.handleBuildError(error);
+                        throw error;
+                    }
+                }
+
+                setupUI() {
+                    this.progressElement.textContent = 'Preparing GIF...';
+                    document.getElementById('gifCard').style.display = 'block';
+                    this.setupSpeedControl();
+                }
+
+                setupSpeedControl() {
+                    const gifSpeedSlider = document.getElementById('gifSpeed');
+                    const gifSpeedLabel = document.getElementById('gifSpeedLabel');
+                    gifSpeedSlider.addEventListener('input', () => {
+                        gifSpeedLabel.textContent = gifSpeedSlider.value;
+                    });
+                }
+
+                async _processFrames(history, seekCallback) {
+                    const frameDelay = parseInt(document.getElementById('gifSpeed').value);
+                    const holdCount = 3;
+                    const lastIndex = history.length - 1;
+
+                    // Process hold frames
+                    await this.processHoldFrames(0, holdCount, history, seekCallback, frameDelay);
+
+                    // Process main frames
+                    await this.processMainFrames(history, seekCallback, frameDelay);
+
+                    // Process end hold frames
+                    await this.processHoldFrames(lastIndex, holdCount, history, seekCallback, frameDelay);
+                }
+
+                async processHoldFrames(frameIndex, count, history, seekCallback, frameDelay) {
+                    for (let j = 0; j < count; j++) {
+                        await this.processSingleFrame(
+                            frameIndex,
+                            history,
+                            frameDelay,
+                            seekCallback,
+                            this.updateProgress(count, history.length)
+                        );
+                    }
+                }
+
+                async processMainFrames(history, seekCallback, frameDelay) {
+                    const batchSize = Math.floor(history.length / 10);
+                    for (let i = 0; i < history.length; i++) {
+                        if (i % batchSize === 0) {
+                            this.updateProgress(i, history.length);
+                            await this.yieldToUI();
+                        }
+                        await this.processSingleFrame(i, history, frameDelay, seekCallback);
+                    }
+                }
+
+                async processSingleFrame(frameIndex, history, frameDelay, seekCallback, progressText = '') {
+                    if (!this.isBuilding) throw new Error("GIF generation cancelled");
+                    if (progressText) this.progressElement.textContent = progressText;
+
+                    seekCallback(frameIndex);
+                    const frame = this._renderFrame(history[frameIndex], frameIndex);
+
+                    this.tempContainer.innerHTML = '';
+                    this.tempContainer.appendChild(frame);
+                    await this.yieldToUI(20);
+
+                    const canvas = await this.captureFrame(frame);
+                    this.gif.addFrame(canvas, { delay: frameDelay, copy: true });
+                }
+
+                async captureFrame(frame) {
+                    return await html2canvas(frame, {
+                        backgroundColor: this.frameBgColor,
+                        scale: this.RESOLUTION_SCALE, // Render at higher resolution
+                        useCORS: true,
+                        allowTaint: true,
+                        width: this.GIF_WIDTH,
+                        height: this.GIF_HEIGHT,
+                        windowWidth: this.GIF_WIDTH,
+                        windowHeight: this.GIF_HEIGHT,
+                        logging: false,
+                        imageTimeout: 0,
+                        letterRendering: true, // Better text rendering
+                        ignoreElements: (element) => false
+
+                    });
+                }
+
+                updateProgress(current, total) {
+                    const percent = Math.round(((current + 1) / total) * 100);
+                    this.progressElement.textContent = `Processed ${percent}% of Steps`;
+                }
+
+                async yieldToUI(delay = 0) {
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+
+                _renderFrame(stateSnapshot, stepIndex) {
+                    const { head, tape, state, move: headMove } = stateSnapshot;
+                    const container = this.createFrameContainer();
+
+                    // Add tape display
+                    container.appendChild(this.createTapeDisplay(head, tape));
+
+                    // Add status display
+                    container.appendChild(this.createStatusDisplay(stepIndex, state, headMove, head));
+
+                    // Add tape summary
+                    if (stepIndex === 0) this._initialTapeString = this._tapeToString(tape);
+                    container.appendChild(this.createTapeSummary(tape));
+
+                    return container;
+                }
+
+                createFrameContainer() {
+                    const container = document.createElement('div');
+                    Object.assign(container.style, {
+                        position: 'relative',
+                        width: `${this.GIF_WIDTH}px`, // Original display size
+                        height: `${this.GIF_HEIGHT}px`, // Original display size
+                        backgroundColor: this.frameBgColor,
+                        padding: '20px',
+                        boxSizing: 'border-box',
+                        fontFamily: 'monospace',
+                        color: '#333',
+                        fontSize: '14px', // Original font size
+                        lineHeight: '20px' // Original line height
+                    });
+                    return container;
+                }
+
+                createTapeDisplay(head, tape) {
+                    const tapeWrapper = document.createElement('div');
+                    tapeWrapper.className = 'tape-wrapper';
+
+                    const tapeContainer = document.createElement('div');
+                    tapeContainer.className = 'tape-container';
+
+                    for (let i = head - this.midpoint; i < head + this.midpoint + 2; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'tape-cell' + (i === head ? ' active' : '');
+                        cell.textContent = tape[i] ?? '_';
+
+                        Object.assign(cell.style, {
+                            width: `${this.CELL_WIDTH}px`, // Original cell size
+                            height: '60px', // Original cell height
+                            fontSize: '20px', // Original font size
+                            lineHeight: '60px', // Original line height
+                            border: i === head ? `4px solid ${this.gifColor}` : '1px solid #ccc',
+                            boxSizing: 'border-box',
+                            textAlign: 'center',
+                            display: 'inline-block',
+                            margin: '0 2px',
+                            fontWeight: i === head ? 'bold' : 'normal'
+                        });
+
+                        tapeContainer.appendChild(cell);
+                    }
+
+                    tapeWrapper.appendChild(tapeContainer);
+                    return tapeWrapper;
+                }
+
+                createStatusDisplay(stepIndex, state, headMove, head) {
+                    const statusContainer = document.createElement('div');
+                    Object.assign(statusContainer.style, {
+                        position: 'absolute',
+                        top: '100px', // Original position
+                        left: `${(this.midpoint)}px`, // Original position
+                        textAlign: 'center',
+                        lineHeight: '1.5',
+                        fontSize: '15px', // Original font size
+                        width: '100%'
+                    });
+
+                    const arrowStyle = `font-size: 45px; vertical-align: middle;`; // Original size
+
+                    const leftArrow = `<span style="color: ${headMove === 'L' ? this.gifColor : 'gray'}; ${arrowStyle}">←</span>`;
+                    const rightArrow = `<span style="color: ${headMove === 'R' ? this.gifColor : 'gray'}; ${arrowStyle}">→</span>`;
+
+                    const stateDisplay = document.createElement('div');
+                    stateDisplay.style.fontSize = '15px'; // Original size
+                    stateDisplay.style.fontWeight = 'bold';
+                    stateDisplay.innerHTML = `${leftArrow} (STEP [${stepIndex}]: ${state}) ${rightArrow}`;
+
+                    statusContainer.appendChild(stateDisplay);
+                    return statusContainer;
+                }
+
+                createTapeSummary(tape) {
+                    const summary = document.createElement('div');
+                    Object.assign(summary.style, {
+                        position: 'absolute',
+                        top: '150px',
+                        left: '20px',
+                        fontSize: '12px',
+                        lineHeight: '1.5',
+                        color: '#666'
+                    });
+
+                    const currentLabel = document.createElement('div');
+                    currentLabel.textContent = `   Full Tape: ${this._tapeToString(tape)}`;
+                    currentLabel.style.whiteSpace = 'pre';
+
+                    const initialLabel = document.createElement('div');
+                    initialLabel.textContent = `Initial Tape: ${this._initialTapeString}`;
+                    currentLabel.style.whiteSpace = 'pre';
+
+                    summary.appendChild(initialLabel);
+                    summary.appendChild(currentLabel);
+                    return summary;
+                }
+
+                _tapeToString(tape) {
+                    const keys = Object.keys(tape).map(Number);
+                    if (keys.length === 0) return '';
+
+                    const min = Math.min(...keys);
+                    const max = Math.max(...keys);
+                    let result = '';
+
+                    for (let i = min; i <= max; i++) {
+                        result += tape[i] ?? '_';
+                    }
+                    return result;
+                }
+
+                async _finalizeGIF(frameCount) {
+                    return new Promise((resolve, reject) => {
+                        this.gif.on('finished', blob => this.handleGIFComplete(blob, frameCount, resolve));
+                        this.gif.on('abort', () => reject(new Error("GIF generation aborted")));
+                        this.gif.on('error', e => reject(e));
+                        this.gif.render();
+                    });
+                }
+
+                handleGIFComplete(blob, frameCount, resolve) {
+                    const url = URL.createObjectURL(blob);
+                    document.getElementById('gifPreview').src = url;
+                    const downloadLink = document.getElementById('downloadGIF');
+                    downloadLink.href = url;              // the blob/object URL
+                    downloadLink.download = `${this.gifName}.gif`; // the desired filename
+                    document.getElementById('downloadGIF').href = downloadLink;
+                    this.progressElement.textContent = `GIF Rendered`;
+                    this.isBuilding = false;
+                    resolve(blob);
+                }
+
+                handleBuildError(error) {
+                    this.isBuilding = false;
+                    this.progressElement.textContent = 'Error generating GIF';
+                    console.error('GIF generation error:', error);
+                }
+
+                cancel() {
+                    document.getElementById('gifCard').style.display = 'none';
+                    if (confirm("Are you sure you want to cancel generation of GIF?")) {
+                        if (this.isBuilding && this.gif) {
+                            this.gif.abort();
+                            this.isBuilding = false;
+                            this.progressElement.textContent = 'GIF generation cancelled';
                         }
                     }
-                } catch (error) {
-                    console.error("Step error:", error);
-                    this.updateMachineStatus(error, "text-danger");
-                    alert(`Error during step: ${error.message}`);
-                }
-            }
-
-            pause(printPause = true) {
-                if (printPause) {
-                    this.updateMachineStatus(`Machine Paused after ${this.step_count} steps`, "text-warning");
-                }
-                this.running = false;
-                clearTimeout(this.auto_run_timeout);
-                this.updateControlButton('run');
-                this.stepBtn.disabled = false;
-            }
-
-            HALT() {
-                this.running = false;
-                this.stepBtn.disabled = true;
-
-                this.updateControlButton('reset');
-                this.RunPauseBtn.disabled = true
-                const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
-                this.updateMachineStatus(textContent, "text-success");    // On halt
-            }
-
-            run() {
-                this.running = true;
-                this.stepBtn.disabled = true;
-
-                this.updateControlButton('pause');
-                this.autoStep();
-            }
-
-            autoStep() {
-                if (!this.running) return;
-                if (this.cpu.current_state === this.cpu.halt_state) {
-                    this.HALT();
-                    return;
-                }
-                this.updateMachineStatus("Machine AutoRun", "text-primary");              // When started
-
-                this.step(false);
-
-                const delay = parseInt(this.delayEntry.value) || this.DELAY;
-                this.auto_run_timeout = setTimeout(() => this.autoStep(), delay);
-            }
-
-            seekHistory(step) {
-                step = parseInt(step);
-                if (isNaN(step)) return;
-
-                if (step < 0 || step >= this.history.length) {
-                    return;
                 }
 
-                const snapshot = this.history[step];
-                this.cpu.tape = { ...snapshot.tape };
-                this.cpu.head_position = snapshot.head;
-                this.cpu.current_state = snapshot.state;
-                this.step_count = step;
-                this.updateUI();
-            }
+                resetGIFCard() {
 
-            goToStep() {
-                const step = parseInt(this.gotoStep.value);
-                if (isNaN(step)) {
-                    alert("Please enter a valid step number");
-                    return;
+                    // Hide the gif container and preview
+                    document.getElementById('gifContainer').style.display = 'none';
+
+                    // Clear preview image
+                    const gifPreview = document.getElementById('gifPreview');
+                    gifPreview.src = '';
+                    gifPreview.alt = 'GIF Preview';
+
+                    // Clear status
+                    document.getElementById('GIFStatus').textContent = '';
+
+                    // Hide the entire gif card (if needed)
+                    document.getElementById('gifCard').style.display = 'none';
+
+                    // Reset download link
+                    // const downloadLink = document.getElementById('downloadGIF');
+                    // downloadLink.href = '#';
+                    // downloadLink.download = 'turing-machine.gif';
                 }
 
-                if (step < 0 || step > this.history.length - 1) {
-                    alert(`Step must be between 0 and ${this.history.length - 1}`);
-                    return;
-                }
-
-                this.historySlider.value = step;
-                this.seekHistory(step);
             }
 
-            updateUI() {
-                // Update tape display
-                this.tapeDisplay.innerHTML = "";
+// Initialize Ace Editor
+            const editor = ace.edit("rulesEditor");
+            editor.setTheme("ace/theme/chrome");
+            editor.session.setMode("ace/mode/text");
+            editor.setOptions({
+                fontSize: "14px",
+                showLineNumbers: true,
+                showGutter: true,
+                cursorStyle: "ace",
+                highlightActiveLine: true,
+                enableBasicAutocompletion: true,
+                enableLiveAutocompletion: true
+            });
 
-                const positions = Object.keys(this.cpu.tape).map(Number);
-                const min_pos = positions.length > 0 ? Math.min(...positions) : 0;
-                const max_pos = positions.length > 0 ? Math.max(...positions) : 0;
+            // Make editor available globally
+            window.getRulesText = () => editor.getValue();
+            window.setRulesText = (text) => editor.setValue(text);
 
-                // Show at least 5 cells before and after the head position
-                const start_pos = Math.min(min_pos, this.cpu.head_position) - 5;
-                const end_pos = Math.max(max_pos, this.cpu.head_position) + 5;
+            // Initialize GUI
+            document.addEventListener('DOMContentLoaded', () => {
+                new Simulator_GUI();
 
-                for (let pos = start_pos; pos <= end_pos; pos++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'tape-cell';
-                    cell.textContent = this.cpu.tape[pos] !== undefined ? this.cpu.tape[pos] : this.cpu.blank_symbol;
-                    if (pos === this.cpu.head_position) {
-                        cell.classList.add('active');
-                    }
-                    this.tapeDisplay.appendChild(cell);
-                }
-                // Scroll the active cell horizontally without affecting vertical position
-                const activeCell = this.tapeDisplay.querySelector('.active');
-                if (activeCell) {
-                    activeCell.scrollIntoView({
-                        behavior: 'auto',
-                        block: 'nearest',  // This prevents vertical scrolling
-                        inline: 'center'   // This handles horizontal scrolling
-                    });
-                }
+                // Populate help section
+                document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
+                document.getElementById('haltStatePlaceholder').textContent = TuringConfig.HALT_STATE;
+                document.getElementById('blankSymbolPlaceholder').textContent = TuringConfig.BLANK;
+                document.getElementById('maxStatesPlaceholder').textContent = TuringConfig.MAX_STATES.toLocaleString();
+                document.getElementById('maxTapeLenPlaceholder').textContent = TuringConfig.MAX_TAPE_LEN.toLocaleString();
+                document.getElementById('maxStateSizePlaceholder').textContent = TuringConfig.MAX_STATE_SIZE;
+                document.getElementById('transitionSizePlaceholder').textContent = TuringConfig.TRANSITION_SIZE.toLocaleString();
 
-                // Restore vertical scroll position
-                window.scrollTo(0, scrollY);
+                // Set current year in footer
+                document.getElementById('year').textContent = new Date().getFullYear();
+            });
+        </script>
 
-                // Update status
-                this.historySlider.max = this.history.length - 1;
-                this.historySlider.value = this.step_count;
-                this.gotoStep.value = this.step_count;
-
-                // Update step state display
-                this.updateStepState();
-
-                // Update results
-                this.updateResults();
-            }
-
-            updateResults() {
-                this.cpu.stepCount = this.step_count;
-                const final_tape = this.cpu._printTapeState();
-                const resources_used = [
-                    `    Time run: ${(TuringConfig.getTimestamp() - this.init_time).toFixed(5)}s`,
-                    ` Memory used: ${TuringConfig.getCurrentMemoryMB()}MB`
-                ];
-
-                const results = [
-                    `Initial Tape: '${this.initial_tape}'`,
-                    ` Result Tape: '${final_tape}'`,
-                    ` Steps Count: ${this.step_count}`,
-                    ` Total Rules: ${this.cpu.transitions_list.length}`,
-                    ...resources_used
-                ];
-
-                this.results.innerHTML = results.join('<br>');
-
-            }
-
-            updateStepState() {
-                const step = parseInt(this.historySlider.value);
-                const prev = step > 0 ? this.history[step - 1].state : "--";
-                const curr = this.history[step].state;
-                const next = step + 1 < this.history.length ? this.history[step + 1].state : 
-                    (step === this.step_count ? "--" : "--");
-                this.stepState.innerHTML = ` Step [${step}]: ${prev} <- <span class="tape-current">${curr}</span> -> ${next}`;
-
-            }
-
-            updateControlButton(state) {
-                const btn_ctrl = this.ControlBtn;
-                btn_ctrl.className = 'control-btn'; // Reset classes
-
-                const btn_rp = this.RunPauseBtn;
-                btn_rp.className = 'btn w-100 action-btn';
-
-                switch(state) {
-                    case 'run':
-                        btn_ctrl.classList.add('btn-run');
-                        btn_rp.classList.add('btn-run');
-                        btn_ctrl.innerHTML = '<i class="bi bi-play-fill"></i>';
-                        btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
-                        break;
-                    case 'pause':
-                        btn_ctrl.classList.add('btn-pause');
-                        btn_rp.classList.add('btn-pause');
-                        btn_ctrl.innerHTML = '<i class="bi bi-pause-fill"></i>';
-                        btn_rp.innerHTML = '<i class="bi bi-pause-fill"></i>Pause';
-                        break;
-                    case 'reset':
-                        btn_ctrl.classList.add('btn-reset');
-                        btn_rp.classList.add('btn-run');
-                        btn_ctrl.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                        btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
-                        break;
-                }
-            }
-
-            updateMachineStatus(text, colorClass = "text-primary") {
-                const statusEl = document.getElementById("machineStatus");
-                statusEl.className = `machineStatus fw-bold text-center ${colorClass}`;
-                statusEl.textContent = text;
-            }
-
-            copyRules() {
-                const rules = window.getRulesText();
-
-                if (!rules.trim()) {
-                    alert("No rules to copy");
-                    return;
-                }
-
-                navigator.clipboard.writeText(rules)
-                    .then(() => alert("Transition rules copied to clipboard"))
-                    .catch(err => {
-                        console.error("Failed to copy rules:", err);
-                        alert("Failed to copy rules. Please try again.");
-                    });
-            }
-
-            clearRules() {
-                if (confirm("Are you sure you want to clear all transition rules?")) {
-                    window.setRulesText("");
-                }
-            }
-
-        }
-
-        // Make editor available globally
-        window.getRulesText = () => editor.getValue();
-        window.setRulesText = (text) => editor.setValue(text);
-
-        // Initialize GUI
-        new Simulator_GUI();
-                    // Populate help section
-        document.getElementById('initStatePlaceholder').textContent = TuringConfig.INIT_STATE;
-        document.getElementById('haltStatePlaceholder').textContent = TuringConfig.HALT_STATE;
-        document.getElementById('blankSymbolPlaceholder').textContent = TuringConfig.BLANK;
-        document.getElementById('maxStatesPlaceholder').textContent = TuringConfig.MAX_STATES.toLocaleString();
-        document.getElementById('maxTapeLenPlaceholder').textContent = TuringConfig.MAX_TAPE_LEN.toLocaleString();
-        document.getElementById('maxStateSizePlaceholder').textContent = TuringConfig.MAX_STATE_SIZE;
-        document.getElementById('transitionSizePlaceholder').textContent = TuringConfig.TRANSITION_SIZE.toLocaleString();
-
-    </script>
         <!-- Footer -->
-    <footer class="text-center py-2 mt-5 bg-light border-top small text-muted">
-        <div class="container">
-            <div class="mb-2">
-                &copy; <span id="year"></span> Abbas Moosajee &nbsp;|&nbsp;
-                <a href="https://github.com/abbasmoosajee07/TuringMachineSim" target="_blank" title="View on GitHub" class="text-dark text-decoration-none">
-                    <i class="bi bi-github align-middle"></i> GitHub
-                </a>
-                &nbsp;|&nbsp; MIT License
+        <footer class="text-center py-2 mt-5 bg-light border-top small text-muted">
+            <div class="container">
+                <div class="mb-2">
+                    &copy; <span id="year"></span> Abbas Moosajee &nbsp;|&nbsp;
+                    <a href="https://github.com/abbasmoosajee07/TuringMachineSim" target="_blank" title="View on GitHub" class="text-dark text-decoration-none">
+                        <i class="bi bi-github align-middle"></i> GitHub
+                    </a>
+                    &nbsp;|&nbsp; MIT License
+                </div>
             </div>
-        </div>
-    </footer>
-</body>
+        </footer>
+    </body>
 </html>

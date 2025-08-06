@@ -13,107 +13,161 @@
 
     <body>
         <!-- Control button -->
-        <button id="ControlBtn" class="control-btn bi bi-play-fill"></button>
+        <button id="ControlBtn" class="control-btn bi bi-play-fill" title = "Control Machine"></button>
 
         <!-- Title and Model Drop Down -->
         <div class="container mt-4">
             <h1 class="text-center mb-4">Turing Machine Simulator</h1>
-
-            <!-- <div class="row align-items-center justify-content-between mb-3">
-                <div class="col-md-6">
-                <h1 class="mb-0 text-center">Turing Machine Simulator</h1>
-                </div>
-
-                <div class="col-md-6 text-end">
-                    <div class="d-flex align-items-center justify-content-end">
-                        <select class="form-select w-auto" id="machineTypeSelect">
-                        <option value="deterministic">Deterministic</option>
-                        <option value="non-deterministic">Non-Deterministic</option>
-                        <option value="multi-tape">Multi-Tape</option>
-                        <option value="multi-head">Multi-Head</option>
-                        <option value="multi-track">Multi-Track</option>
-                        <option value="enumerator">Enumerator</option>
-                        <option value="semi-infinite">Semi-Infinite</option>
-                        <option value="k-dimensional">K-Dimensional</option>
-                        </select>
-                    </div>
-                </div>
-            </div> -->
-
         </div>
 
         <!-- Main GUI-->
         <div class="container mt-4">
-
-            <!-- Tape Display -->
-            <div class="card mt-3">
-                <!-- <div class="card-header">Ticker Tape</div> -->
-                <div class="card-header d-flex align-items-center justify-content-between">
-                <span>Ticker Tape</span>
+            <!-- Ticker Tape & Controls Card -->
+            <div class="card mt-4 shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Ticker Tape</span>
+                    <div class="gif-controls d-flex align-items-center gap-2">
+                        <button id="buildGIF" class="btn btn-buildgif w-100 action-btn bi bi-camera-reels-fill"> Build GIF</button>
+                    </div>
                 </div>
 
                 <div class="card-body">
                     <!-- Tape Display -->
-                    <div class="mb-2 mt-1">
-                        <div class="tape-wrapper border rounded p-2 bg-light">
-                            <div id="tapeDisplay" class="tape-container"></div>
-                        </div>
+                    <div class="tape-wrapper border rounded p-3 bg-light mb-3">
+                        <div id="tapeDisplay" class="tape-container"></div>
                     </div>
 
                     <!-- Machine Status -->
-                    <div class="mb-2 mt-1">
-                        <div id="machineStatus" class="machineStatus fw-bold text-center"></div>
+                    <div id="machineStatus" class="machineStatus fw-bold text-center text-secondary mb-3"></div>
+
+                    <!-- History Slider -->
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <label for="historySlider" class="form-label mb-0 text-nowrap">History:</label>
+                        <input type="range" class="slider-primary form-range flex-grow-1" id="historySlider" min="0" max="0" value="0">
                     </div>
 
-                    <!-- History Slider and Step Info -->
-                    <div class="mb-2 mt-1">
-                        <div class="d-flex align-items-center gap-2">
-                            <label for="historySlider" class="form-label mb-0">History:</label>
-                            <input type="range" class="form-range slider-primary flex-grow-1" id="historySlider" min="0" max="0" value="0">
+                    <!-- Step Info -->
+                    <div id="stepState" class="step-state text-center text-muted small"></div>
+                </div>
+            </div>
+
+            <!-- GIF Preview Card -->
+            <div id="gifCard" class="card mt-4 shadow-sm" style="display: none;">
+                <div class="card-header">GIF Preview</div>
+
+                <div class="card-body">
+                <!-- GIF Controls Section -->
+                <div class="row g-3 align-items-center justify-content-between mb-3">
+
+                    <!-- Left Column: Controls -->
+                    <div class="col-auto d-flex flex-wrap align-items-center gap-2">
+
+                        <!-- Delay -->
+                        <div class="d-flex align-items-center">
+                            <label for="gifSpeed" class="me-1 mb-0 small">FPS(ms):</label>
+                            <input type="number" id="gifSpeed" class="form-control text-center"
+                                style="width: 60px; height: 24px; padding: 0 4px; font-size: 12px;"
+                                min="50" max="5000" step="50" value="500" title="GIF animation speed">
+                        </div>
+
+                        <!-- Cells -->
+                        <div class="d-flex align-items-center">
+                            <label for="visibleCells" class="me-1 mb-0 small">Cells:</label>
+                            <input type="number" id="visibleCells" class="form-control text-center"
+                                style="width: 50px; height: 24px; padding: 0 4px; font-size: 12px;"
+                                min="1" max="99" value="15" title="Display number of cells">
+                        </div>
+
+                        <!-- Resolution -->
+                        <div class="d-flex align-items-center">
+                            <label for="resolution" class="me-1 mb-0 small">Res:</label>
+                            <input type="number" id="resolution" class="form-control text-center"
+                                style="width: 50px; height: 24px; padding: 0 4px; font-size: 12px;"
+                                min="1" max="99" value="2" title="Resolution: Higher improves quality, increases memory and render time">
+                        </div>
+
+                        <!-- Color -->
+                        <div class="d-flex align-items-center">
+                            <label for="gifColor" class="me-1 mb-0 small">Color:</label>
+                            <input type="color" id="gifColor" class="form-control form-control-color p-0"
+                                style="width: 28px; height: 24px;" value="#fd490d" title="Active cell color">
                         </div>
                     </div>
 
-                    <div id="stepState" class="step-state text-center mb-0"></div>
+                    <!-- Status Area -->
+                    <div class="col-auto d-flex align-items-center">
+                        <div id="GIFStatus" class="machineStatus text-medium text-center" style="min-height: 24px;"></div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="col-auto d-flex align-items-center gap-2">
+                        <button id="generateGIF" class="btn btn-rendergif action-btn">
+                            <i class="bi bi-film" title="Render GIF based on current history"></i> Render
+                        </button>
+                        <button id="cancelGIF" class="btn btn-cancelgif action-btn">
+                            <i class="bi bi-x-circle-fill" title="Cancel current rendering"></i> Cancel
+                        </button>
+                        <a id="downloadGIF" class="btn btn-savegif action-btn" download="turing-machine.gif">
+                            <i class="bi bi-filetype-gif" title="Download GIF"></i> Save
+                        </a>
+                    </div>
+
+                </div>
+
+                    <!-- GIF Preview -->
+                    <div id="gifContainer" class="text-center" style="display: none;">
+                        <div class="preview-image mb-2">
+                            <img id="gifPreview" class="img-fluid border rounded shadow-sm"
+                                alt="GIF Preview">
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
             <!-- Controls and Configuration -->
             <div class="row mt-3 align-items-stretch">
-
                 <!-- Configure Model -->
                 <div class="col-md-8 mb-2">
                     <div class="card h-100">
-                        <div class="card-header">Configure Model</div>
-                        <div class="card-body">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <span>Configure Model</span>
+                            <input type="text" id="modelInputName"
+                                class="form-control form-control-sm ms-2 fst-italic"
+                                placeholder="turing_test..."
+                                style="max-width: 200px; font-style: italic;">
+                        </div>
 
+                        <div class="card-body">
                             <!-- Transition Rules -->
                             <div class="mb-3 flex-grow-1">
                                 <label for="rulesEditor" class="form-label">Transition Rules:</label>
-                                <div id="rulesEditor" class="form-control h-100" style="min-height: 250px; white-space: pre-wrap;">INIT | FIND | R
+                                <div id="rulesEditor" class="form-control h-100" style="min-height: 250px; white-space: pre-wrap;" title="Rules Editor">// turing_test: unary increment
+INIT | FIND | R
 FIND | FIND | R
-FIND _ HALT | R</div>
+FIND _ HALT | L</div>
                             </div>
 
                             <!-- Initial Tape -->
                             <div class="mb-3">
                                 <label for="tapeInput" class="form-label">Initial Tape:</label>
-                                <input type="text" id="tapeInput" class="form-control" value="|||||||">
+                                <input type="text" id="tapeInput" class="form-control" value="||||">
                             </div>
 
                             <!-- Action Buttons -->
-                            <div class="row mb-0 g-2 mt-auto"> <!-- 🔧 push to bottom -->
+                            <div class="row mb-0 g-2 mt-auto">
                                 <div class="col-3">
                                     <button id="clearRulesBtn" class="btn btn-clear w-100 action-btn bi bi-trash-fill"> Clear</button>
                                 </div>
                                 <div class="col-3">
-                                    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+                                    <input type="file" id="fileInput" accept=".txt" style="display: none;" title="Load .txt files">
                                     <button id="uploadBtn" class="btn btn-upload w-100 action-btn bi bi-file-earmark-arrow-up"> Upload</button>
                                 </div>
                                 <div class="col-3">
                                     <button id="copyRulesBtn" class="btn btn-copy w-100 action-btn bi bi-clipboard-fill"> Copy</button>
                                 </div>
                                 <div class="col-3">
-                                    <button id="loadBtn" class="btn btn-load w-100 action-btn bi bi-upload"> Load</button>
+                                    <button id="saveBtn" class="btn btn-save w-100 action-btn bi bi-save"> Save</button>
                                 </div>
                             </div>
                         </div>
@@ -124,8 +178,7 @@ FIND _ HALT | R</div>
                 <div class="col-md-4 mb-2">
                     <div class="card h-100">
                         <div class="card-header">Control Machine</div>
-                        <div class="card-body d-flex flex-column"> <!-- 🔧 flex column -->
-
+                        <div class="card-body d-flex flex-column">
                             <!-- Step Navigation -->
                             <div class="mb-3">
                                 <div class="row align-items-center g-2">
@@ -158,9 +211,9 @@ FIND _ HALT | R</div>
                             </div>
 
                             <!-- Control Buttons -->
-                            <div class="row mb-3 g-2 mt-auto"> <!-- 🔧 align bottom -->
+                            <div class="row mb-3 g-2 mt-auto">
                                 <div class="col-4">
-                                    <button id="stepBtn" class="btn btn-step w-100 action-btn bi bi-skip-forward-fill"> Jump</button>
+                                    <button id="stepBtn" class="btn btn-step w-100 action-btn bi bi-skip-forward-fill">Jump</button>
                                 </div>
                                 <div class="col-4">
                                     <button id="RunPauseBtn" class="btn btn-runpause w-100 action-btn bi bi-play-fill">Play</button>
@@ -176,7 +229,7 @@ FIND _ HALT | R</div>
 
             <!-- Model Results -->
             <div class="card mt-3">
-                <div class="card-header">Model Results</div>
+                <div class="card-header">Model Summary</div>
                 <div class="card-body">
                     <div id="results" class="monospace"></div>
                     <div id="resources" class="monospace mt-2"></div>
@@ -220,10 +273,9 @@ FIND _ HALT | R</div>
 
                             <h6 class="small text-dark mt-3">🔁 Move Directions</h6>
                             <ul class="small text-muted ps-3">
-                                <li><code>L</code> – Move Left</li>
-                                <li><code>R</code> – Move Right</li>
+                                <li><code>L</code> - Move Left</li>
+                                <li><code>R</code> - Move Right</li>
                             </ul>
-
                         </div>
 
                         <!-- Column 3: Configuration & Limits -->
@@ -246,20 +298,20 @@ FIND _ HALT | R</div>
                     </div>
                 </div>
             </div>
-
         </div>
 
         <!-- JavaScript Libraries -->
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/gif.js.optimized/dist/gif.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
         <!-- Main Application Script -->
         <script type="module">
             import { TuringConfig, MachineLogic } from './javascript_machine/TuringBrain.js';
             import { Simulator_GUI } from './javascript_machine/Simulator_GUI.js';
+            import { GIFBuilder } from './turing_gui/GIFBuilder.js';
 
             window.TuringConfig = TuringConfig;
             window.MachineLogic = MachineLogic;

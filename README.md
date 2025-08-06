@@ -97,12 +97,12 @@ Then open `http://localhost:8000` in your browser.
 
 | Feature                   | Description                                            |
 | ------------------------- | ------------------------------------------------------ |
-| Tape GIF     | Create a Tape GIF showing the transformation     |
+| ~~Tape GIF~~     | Create a Tape GIF showing the transformation     |
 | Export/Import Config      | Save/load machine rules and tape setup in JSON format  |
 | Tape Scrolling Buttons    | Navigate long tapes easily with arrows                 |
 | Web Export                | Generate shareable URL or embed for configured machine |
 | Dark Mode Toggle          | Switch to a dark-themed UI for accessibility           |
-| Run Summary Modal         | Display stats and final tape state after halting       |
+| ~~Run Summary Modal~~         | Display stats and final tape state after halting       |
 | Rule Syntax Validator     | Highlight and report malformed rules             |
 
 ##### Planned Machine Types

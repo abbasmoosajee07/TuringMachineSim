@@ -61,22 +61,22 @@ class MachineLogic {
         initState = TuringConfig.INIT_STATE,
         haltState = TuringConfig.HALT_STATE,
         blankSymbol = TuringConfig.BLANK) {
-        this.init_state = initState;
-        this.halt_state = haltState;
-        this.blank_symbol = blankSymbol;
+            this.init_state = initState;
+            this.halt_state = haltState;
+            this.blank_symbol = blankSymbol;
 
-        this.MAX_STATES = TuringConfig.MAX_STATES;
-        this.MAX_STATE_SIZE = TuringConfig.MAX_STATE_SIZE;
+            this.MAX_STATES = TuringConfig.MAX_STATES;
+            this.MAX_STATE_SIZE = TuringConfig.MAX_STATE_SIZE;
 
-        this.transitions_list = transitionsList;
-        this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
+            this.transitions_list = transitionsList;
+            this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
 
-        // Initialize Tape
-        this.head_position = 0;
-        this.current_state = initState;
-        this.tape = {};
-        this.running = true;
-        this.input_tape = "";
+            // Initialize Tape
+            this.head_position = 0;
+            this.current_state = initState;
+            this.tape = {};
+            this.running = true;
+            this.input_tape = "";
     }
 
     _validateTransition(transition) {
@@ -147,10 +147,11 @@ class MachineLogic {
             throw new Error("Input tape must not contain spaces");
         }
 
-        this.head_position = 0;
-        this.current_state = this.init_state;
         this.tape = {};
         this.input_tape = inputTape;
+        this.headMove = "N";
+        this.head_position = 0;
+        this.current_state = this.init_state;
 
         for (let i = 0; i < inputTape.length; i++) {
             const symbol = inputTape[i];
@@ -213,6 +214,7 @@ class MachineLogic {
         const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
         this.current_state = newState;
         this.head_position += shift;
+        this.headMove = moveDirection;
     }
 
     runLogic(inputTape, maxSteps = 1_000_000, visualize = false) {

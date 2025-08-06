@@ -1,44 +1,37 @@
 import { TuringConfig  } from "./TuringBrain.js";
+import { GIFBuilder } from '../turing_gui/GIFBuilder.js';
 
 class Simulator_GUI {
     constructor() {
         this.init_time = TuringConfig.getTimestamp();
+        this.modelName = "turing_test";
+        this.auto_run_timeout = null;
+        this.running = false;
+        this.history = [];
         this.MAX_STEPS = 0;
         this.BASE_STEP = 0;
         this.DELAY = 0;
         this.step_count = 0;
-        this.running = false;
-        this.auto_run_timeout = null;
-        this.history = [];
 
         this.initElements();
         this.setupEventListeners();
-        this.load();
+        this.reset();
     }
 
     initElements() {
-        this.gotoBtn = document.getElementById('gotoBtn');
-        this.loadBtn = document.getElementById('loadBtn');
-        this.maxSteps = document.getElementById('maxSteps');
-        this.resetBtn = document.getElementById('resetBtn');
-        this.gotoStep = document.getElementById('gotoStep');
-        this.stepEntry = document.getElementById('stepEntry');
-        this.tapeInput = document.getElementById('tapeInput');
-        this.rulesText = document.getElementById('rulesText');
-        this.stepState = document.getElementById('stepState');
-        this.delayEntry = document.getElementById('delayEntry');
-        this.tapeDisplay = document.getElementById('tapeDisplay');
-        this.RunPauseBtn = document.getElementById('RunPauseBtn');
-        this.copyRulesBtn = document.getElementById('copyRulesBtn');
-        this.historySlider = document.getElementById('historySlider');
-        this.machineStatus = document.getElementById('machineStatus');
-        this.clearRulesBtn = document.getElementById('clearRulesBtn');
-        this.stepBtn = document.getElementById('stepBtn');
-        this.results = document.getElementById('results');
-        this.uploadBtn = document.getElementById('uploadBtn');
-        this.fileInput = document.getElementById('fileInput');
-        this.resources = document.getElementById('resources');
-        this.ControlBtn = document.getElementById('ControlBtn');
+        const ids = [
+            'gotoBtn', 'maxSteps', 'resetBtn', 'gotoStep', 'stepEntry', 'saveBtn',
+            'tapeInput', 'rulesText', 'stepState', 'delayEntry', 'tapeDisplay',
+            'RunPauseBtn', 'copyRulesBtn', 'historySlider', 'machineStatus',
+            'clearRulesBtn', 'stepBtn', 'results', 'uploadBtn', 'fileInput',
+            'resources', 'ControlBtn', 'buildGIF', 'generateGIF',
+            'gifCard', 'gifContainer', 'gifPreview', 'GIFStatus',
+            'cancelGIF', 'modelInputName',
+        ];
+
+        for (const id of ids) {
+            this[id] = document.getElementById(id);
+        }
     }
 
     setupEventListeners() {
@@ -49,27 +42,29 @@ class Simulator_GUI {
             };
         };
 
-        // Connect upload button to file input
+        this.modelInputName.addEventListener('input', () => {
+            this.modelName = this.modelInputName.value.trim() || "turing_test";
+        });
+
+        // Upload and load/reset
         this.uploadBtn.addEventListener('click', () => this.fileInput.click());
-        this.fileInput.addEventListener('change', (event) => this.uploadRules(event));
+        this.fileInput.addEventListener('change', (e) => this.uploadRules(e));
 
-        this.loadBtn.addEventListener('click', withScrollToTop(() => this.load()));
+        // Rules and state
+        this.copyRulesBtn.addEventListener('click', () => this.copyRules());
+        this.clearRulesBtn.addEventListener('click', () => this.clearRules());
+        this.saveBtn.addEventListener("click", () => this.downloadRules());
+
+        // Navigation and step controls
         this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
-
         this.gotoBtn.addEventListener('click', withScrollToTop(() => this.goToStep()));
         this.stepBtn.addEventListener('click', withScrollToTop(() => this.step()));
-
-        this.copyRulesBtn.addEventListener('click', withScrollToTop(() => this.copyRules()));
-        this.clearRulesBtn.addEventListener('click', withScrollToTop(() => this.clearRules()));
-
         this.historySlider.addEventListener('input', withScrollToTop(() =>
             this.seekHistory(parseInt(this.historySlider.value))
         ));
 
-        this.RunPauseBtn.addEventListener('click', () => {
-            this.ControlBtn.click();
-        });
-
+        // Run/Pause logic
+        this.RunPauseBtn.addEventListener('click', withScrollToTop(() => this.ControlBtn.click()));
         this.ControlBtn.addEventListener('click', () => {
             if (this.running) {
                 this.pause();
@@ -81,6 +76,25 @@ class Simulator_GUI {
         });
 
         this.updateControlButton('run');
+
+        // Show GIF card
+        this.buildGIF.addEventListener("click", () => {
+            if (this.history?.length >= 2) {
+                this.gifCard.style.display = "block";
+            } else {
+                alert("Not enough history to generate a GIF. Please run the machine first.");
+            }
+        });
+
+        // Generate GIF from captured frames
+        this.generateGIF.addEventListener("click", () => this.generateGIFFromHistory());
+
+        this.cancelGIF.addEventListener("click", () => {
+            if (this.gifBuilder.isBuilding){
+                this.gifBuilder.cancel()
+                this.setAllButtonsDisabled(false)
+            }
+        });
     }
 
     uploadRules(event) {
@@ -88,12 +102,15 @@ class Simulator_GUI {
         if (!file) return;
 
         const reader = new FileReader();
+        document.getElementById('modelInputName').value = file.name.replace(/\.[^/.]+$/, '');
 
         reader.onload = (e) => {
             try {
                 const text = e.target.result.trim();
                 window.setRulesText(text);
-                this.load(); // auto-load after upload
+                this.stepBtn.disabled = true;
+                this.RunPauseBtn.disabled = true;
+                this.ControlBtn.disabled = true;
             } catch (error) {
                 console.error("Error loading file:", error);
                 this.updateMachineStatus("Error loading file", "text-danger");
@@ -109,63 +126,44 @@ class Simulator_GUI {
         reader.readAsText(file);
     }
 
-    load() {
+    reset() {
         try {
+            clearTimeout(this.auto_run_timeout);
             const rules = window.getRulesText(); // Using the Ace Editor content
+            this.gifCard.style.display = "none";
+            this.gifContainer.style.display = 'none';
+            this.GIFStatus.textContent = "No GIF Created yet"
             const transitions = new TuringConfig().parseTransitionRules(rules);
-            this.initial_tape = this.tapeInput.value || "||||";
+            this.initial_tape = this.tapeInput.value;
             this.init_time = TuringConfig.getTimestamp();
             this.cpu = new MachineLogic(transitions);
             this.cpu._setTape(this.initial_tape);
 
             this.step_count = 0;
             this.running = false;
-            this.updateControlButton('run');
-            this.updateMachineStatus("Machine Loaded", "text-secondary");
+            this.buildGIF.disabled = true;
             this.stepBtn.disabled = false;
-
+            this.RunPauseBtn.disabled = false;
+            this.ControlBtn.disabled = false;
+            this.updateControlButton('run');
+            this.updateMachineStatus(`Model '${this.modelName}' Loaded`, "text-secondary");
+            this.rulesNo = this.cpu.transitions_list.length
             this.history = [{
                 tape: { ...this.cpu.tape },
                 head: this.cpu.head_position,
-                state: this.cpu.current_state
+                state: this.cpu.current_state,
+                move: "N",
             }];
 
             this.updateUI();
+
+            // Update results
+            this.updateResults();
+
         } catch (error) {
             console.error("Load error:", error);
             this.updateMachineStatus(error, "text-danger");
             alert(`Error during load: ${error.message}`);
-        }
-    }
-
-    reset() {
-        clearTimeout(this.auto_run_timeout);
-        try {
-            if (!this.initial_tape) {
-                const status = "Initial configuration not loaded. Click 'Load' first."
-                this.updateMachineStatus(status, "text-warning")
-                alert(status);
-                return;
-            }
-            this.init_time = TuringConfig.getTimestamp();
-            this.cpu._setTape(this.initial_tape);
-            this.step_count = 0;
-            this.running = false;
-            this.stepBtn.disabled = false;
-            this.RunPauseBtn.disabled = false;
-            this.updateControlButton('run');
-            this.updateMachineStatus("Machine RESET", "text-secondary");
-
-            this.history = [{
-                tape: { ...this.cpu.tape },
-                head: this.cpu.head_position,
-                state: this.cpu.current_state
-            }];
-            this.updateUI();
-        } catch (error) {
-            console.error("Reset error:", error);
-            this.updateMachineStatus(error, "text-danger");
-            alert(`Error during reset: ${error.message}`);
         }
     }
 
@@ -182,6 +180,7 @@ class Simulator_GUI {
                     this.pause(false);
                     break;
                 }
+
                 if (this.cpu.current_state === this.cpu.halt_state) {
                     this.HALT();
                     break;
@@ -190,15 +189,19 @@ class Simulator_GUI {
                 try {
                     this.cpu._stepLogic();
                     this.step_count++;
+                    this.history[this.step_count -1]['move'] = this.cpu.headMove;
 
                     this.history.push({
                         tape: { ...this.cpu.tape },
                         head: this.cpu.head_position,
-                        state: this.cpu.current_state
+                        state: this.cpu.current_state,
+                        move: "N",
                     });
 
                     this.updateUI();
 
+                    // Update results
+                    this.updateResults();
                 } catch (error) {
                     const textContent = `Machine STUCK | After ${this.step_count} steps`;
                     this.updateMachineStatus(textContent, "text-danger");
@@ -221,14 +224,16 @@ class Simulator_GUI {
         clearTimeout(this.auto_run_timeout);
         this.updateControlButton('run');
         this.stepBtn.disabled = false;
+        this.buildGIF.disabled = false;
     }
 
     HALT() {
         this.running = false;
         this.stepBtn.disabled = true;
+        this.RunPauseBtn.disabled = true
+        this.buildGIF.disabled = false;
 
         this.updateControlButton('reset');
-        this.RunPauseBtn.disabled = true
         const textContent = `Machine HALTED | Total Steps: ${this.step_count}`;
         this.updateMachineStatus(textContent, "text-success");    // On halt
     }
@@ -236,6 +241,8 @@ class Simulator_GUI {
     run() {
         this.running = true;
         this.stepBtn.disabled = true;
+        this.buildGIF.disabled = true;
+
 
         this.updateControlButton('pause');
         this.autoStep();
@@ -329,8 +336,6 @@ class Simulator_GUI {
         // Update step state display
         this.updateStepState();
 
-        // Update results
-        this.updateResults();
     }
 
     updateResults() {
@@ -345,12 +350,11 @@ class Simulator_GUI {
             `Initial Tape: '${this.initial_tape}'`,
             ` Result Tape: '${final_tape}'`,
             ` Steps Count: ${this.step_count}`,
-            ` Total Rules: ${this.cpu.transitions_list.length}`,
+            ` Total Rules: ${this.rulesNo}`,
             ...resources_used
         ];
 
         this.results.innerHTML = results.join('<br>');
-
     }
 
     updateStepState() {
@@ -360,7 +364,6 @@ class Simulator_GUI {
         const next = step + 1 < this.history.length ? this.history[step + 1].state : 
             (step === this.step_count ? "--" : "--");
         this.stepState.innerHTML = ` Step [${step}]: ${prev} <- <span class="tape-current">${curr}</span> -> ${next}`;
-
     }
 
     updateControlButton(state) {
@@ -375,19 +378,19 @@ class Simulator_GUI {
                 btn_ctrl.classList.add('btn-run');
                 btn_rp.classList.add('btn-run');
                 btn_ctrl.innerHTML = '<i class="bi bi-play-fill"></i>';
-                btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
+                btn_rp.innerHTML = '<i class="w-100 bi bi-play-fill"></i>Play';
                 break;
             case 'pause':
                 btn_ctrl.classList.add('btn-pause');
                 btn_rp.classList.add('btn-pause');
                 btn_ctrl.innerHTML = '<i class="bi bi-pause-fill"></i>';
-                btn_rp.innerHTML = '<i class="bi bi-pause-fill"></i>Pause';
+                btn_rp.innerHTML = '<i class="w-100 bi bi-pause-fill"></i>Stop';
                 break;
             case 'reset':
                 btn_ctrl.classList.add('btn-reset');
                 btn_rp.classList.add('btn-run');
                 btn_ctrl.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
-                btn_rp.innerHTML = '<i class="bi bi-play-fill"></i>Run';
+                btn_rp.innerHTML = '<i class="w-100 bi bi-play-fill"></i>Play';
                 break;
         }
     }
@@ -396,6 +399,36 @@ class Simulator_GUI {
         const statusEl = document.getElementById("machineStatus");
         statusEl.className = `machineStatus fw-bold text-center ${colorClass}`;
         statusEl.textContent = text;
+    }
+
+    setAllButtonsDisabled(disabled) {
+        document.querySelectorAll('button:not(#cancelGIF)').forEach(btn => {
+            btn.disabled = disabled;
+        });
+    }
+
+    async generateGIFFromHistory() {
+        try {
+            this.gifContainer.style.display = 'none';
+            this.setAllButtonsDisabled(true);
+
+            // Initialize GIFBuilder
+            this.gifBuilder = new GIFBuilder(
+                this.tapeDisplay, this.GIFStatus,
+                this.modelName, this.rulesNo,
+            );
+
+            // Generate GIF
+            const blob = await this.gifBuilder.buildFromHistory(
+                this.history, (step) => this.seekHistory(step)
+            );
+
+        } catch (error) {
+            console.error("GIF generation error:", error);
+            this.gifProgress.textContent = `Error: ${error.message}`;
+        } finally {
+            this.setAllButtonsDisabled(false);
+        }
     }
 
     copyRules() {
@@ -420,7 +453,112 @@ class Simulator_GUI {
         }
     }
 
+    downloadRules() {
+        const rulesText = window.getRulesText(); // Get current rules from Ace or text storage
+        const blob = new Blob([rulesText], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${this.modelName}.txt`;
+        a.style.display = "none";
+
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
+    }
+
+    toJSON() {
+        return {
+            step_count: this.step_count,
+            running: this.running,
+            initial_tape: this.initial_tape,
+            history: this.history,
+            transitions: this.cpu?.transitions,
+            head_position: this.cpu?.head_position,
+            current_state: this.cpu?.current_state,
+            halt_state: this.cpu?.halt_state,
+            tape: this.cpu?.tape,
+            rulesText: window.getRulesText(), // From Ace Editor or wherever you're storing rules
+        };
+    }
+
+    downloadJSON() {
+        const data = this.toJSON();
+        const jsonStr = JSON.stringify(data, null, 2); // Pretty-print
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${this.modelName}.json`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    uploadState(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                if (!json || typeof json !== "object") throw new Error("Invalid file format");
+
+                // Set rules text from saved string
+                window.setRulesText(json.rulesText || "");
+
+                // Restore machine state
+                this.initial_tape = json.initial_tape || "";
+                this.cpu = new MachineLogic(json.transitions || []);
+                this.cpu._setTape(this.initial_tape);
+                this.cpu.head_position = json.head_position || 0;
+                this.cpu.current_state = json.current_state || "q0";
+                this.cpu.halt_state = json.halt_state || "halt";
+                this.cpu.tape = json.tape || {};
+
+                this.step_count = json.step_count || 0;
+                this.running = false; // Always reset running state
+
+                this.history = json.history || [{
+                    tape: { ...this.cpu.tape },
+                    head: this.cpu.head_position,
+                    state: this.cpu.current_state,
+                    move: "N",
+                }];
+
+                this.updateControlButton('run');
+                this.stepBtn.disabled = false;
+                this.RunPauseBtn.disabled = false;
+                this.updateUI();
+                this.updateResults();
+                this.updateMachineStatus("Machine state loaded", "text-success");
+
+            } catch (error) {
+                console.error("Error loading state file:", error);
+                this.updateMachineStatus("Invalid or corrupted state file", "text-danger");
+                alert(`Error loading file: ${error.message}`);
+            }
+        };
+
+        reader.onerror = () => {
+            this.updateMachineStatus("Error reading file", "text-danger");
+            alert("Error reading file");
+        };
+
+        reader.readAsText(file);
+    }
+
 }
+
 
 export { Simulator_GUI };
 
