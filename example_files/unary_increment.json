@@ -1,0 +1,55 @@
+{
+  "LEFT": "L",
+  "RIGHT": "R",
+  "BLANK": "_",
+  "INIT_STATE": "INIT",
+  "HALT_STATE": "HALT",
+  "COMMENT_PREFIX": "//",
+  "MAX_STATES": 1024,
+  "MAX_TAPE_LEN": 1048576,
+  "MAX_STATE_SIZE": 32,
+  "TRANSITION_SIZE": 710000,
+  "rulesText": "// turing_test: unary increment\nINIT | FIND | R\nFIND | FIND | R\nFIND _ HALT | L",
+  "rulesNo": 3,
+  "max_len": 0,
+  "history": [
+    {
+      "tape": {
+        "0": "|",
+        "1": "|",
+        "2": "|",
+        "3": "|",
+        "4": "|",
+        "5": "|",
+        "6": "|",
+        "7": "|",
+        "8": "|"
+      },
+      "head": 0,
+      "state": "INIT",
+      "move": "N"
+    }
+  ],
+  "tape_len": 0,
+  "step_count": 0,
+  "initial_tape": "|||||||||",
+  "head_position": 0,
+  "current_state": "INIT",
+  "input_tape": "|||||||||",
+  "running": true,
+  "tape": {
+    "0": "|",
+    "1": "|",
+    "2": "|",
+    "3": "|",
+    "4": "|",
+    "5": "|",
+    "6": "|",
+    "7": "|",
+    "8": "|"
+  },
+  "buildGIF": true,
+  "stepBtn": false,
+  "RunPauseBtn": false,
+  "ControlBtn": "control-btn btn-run"
+}

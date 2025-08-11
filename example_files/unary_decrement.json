@@ -1,0 +1,45 @@
+{
+  "LEFT": "L",
+  "RIGHT": "R",
+  "BLANK": "_",
+  "INIT_STATE": "INIT",
+  "HALT_STATE": "HALT",
+  "COMMENT_PREFIX": "//",
+  "MAX_STATES": 1024,
+  "MAX_TAPE_LEN": 1048576,
+  "MAX_STATE_SIZE": 32,
+  "TRANSITION_SIZE": 710000,
+  "rulesText": "// turing_test: unary decrement\r\nINIT 1 FIND_END 1 R\r\nFIND_END 1 FIND_END 1 R\r\nFIND_END _ ERASE _ L\r\nERASE 1 HALT _ R\r\n",
+  "rulesNo": 4,
+  "max_len": 0,
+  "history": [
+    {
+      "tape": {
+        "0": "1",
+        "1": "1",
+        "2": "1",
+        "3": "1"
+      },
+      "head": 0,
+      "state": "INIT",
+      "move": "N"
+    }
+  ],
+  "tape_len": 0,
+  "step_count": 0,
+  "initial_tape": "1111",
+  "head_position": 0,
+  "current_state": "INIT",
+  "input_tape": "1111",
+  "running": true,
+  "tape": {
+    "0": "1",
+    "1": "1",
+    "2": "1",
+    "3": "1"
+  },
+  "buildGIF": true,
+  "stepBtn": false,
+  "RunPauseBtn": false,
+  "ControlBtn": "control-btn btn-run"
+}
