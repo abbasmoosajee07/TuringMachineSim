@@ -207,7 +207,7 @@ class MachineLogic {
         }
 
         const pointerStr = `${" ".repeat(headPosInWindow)}^`;
-        const tape_state = `[${this.stepCount}]: ${this.current_state}`
+        const tape_state = `[${this.stepCount || 0}]: ${this.current_state}`
         const printedState = [tapeStr, pointerStr, tape_state, ""];
 
         if (visualize) {
@@ -260,8 +260,8 @@ class MachineLogic {
             }
 
             this._stepLogic();
-            tape = this._printTapeState(visualize);
             this.stepCount++;
+            tape = this._printTapeState(visualize);
         }
 
         return [tape, this.stepCount, this.transitions_list.length];

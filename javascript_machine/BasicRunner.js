@@ -42,7 +42,9 @@ class TuringMachine {
             this.step_count = steps;
         }
 
-        this.printSummary();
+        if (visualize) {
+            this.printSummary();
+        };
     }
 }
 
