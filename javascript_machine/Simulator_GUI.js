@@ -1,37 +1,69 @@
-import { TuringConfig  } from "./TuringBrain.js";
-import { GIFBuilder } from '../turing_gui/GIFBuilder.js';
+import { TuringConfig } from "./TuringBrain.js";
+import {  GIFBuilder  } from '../turing_gui/GIFBuilder.js';
+import { StateManager } from '../turing_gui/StateManager.js'
 
 class Simulator_GUI {
+    docIDs = [
+        // Core Controls
+        'stepBtn', 'RunPauseBtn', 'resetBtn', 'ControlBtn',
+        // Navigation & Step Management
+        'gotoBtn', 'gotoStep', 'stepEntry', 'maxSteps', 'historySlider',
+        // Tape & Input Handling
+        'tapeInput', 'tapeDisplay', 'clearTapeBtn', 'copyTapeBtn',
+        // Rules & Configuration
+        'rulesText', 'clearRulesBtn', 'copyRulesBtn', 'modelInputName',
+        // Status & Feedback
+        'stepState', 'machineStatus', 'results', 'resources',
+        // GIF Export
+        'buildGIF', 'generateGIF', 'cancelGIF', 'gifCard', 'gifContainer', 'gifPreview', 'GIFStatus',
+        // File Operations
+        'importModal', 'exportModal','importBtn', 'exportBtn', 'saveBtn',
+        // Performance
+        'delayEntry'
+    ];
+
+    EXAMPLES = {
+            'unary_increment': 'unary_increment.json',
+            'unary_decrement': 'unary_decrement.json',
+            // 'Binary Adder': 'binary_adder.json',
+            // 'Busy Beaver (3-state)': 'busy_beaver.json'
+        };
+
     constructor() {
         this.init_time = TuringConfig.getTimestamp();
-        this.modelName = "turing_test";
         this.auto_run_timeout = null;
         this.running = false;
-        this.history = [];
+        this.modelName = " ";
+        this.step_count = 0;
         this.MAX_STEPS = 0;
         this.BASE_STEP = 0;
+        this.history = [];
         this.DELAY = 0;
-        this.step_count = 0;
 
         this.initElements();
         this.setupEventListeners();
-        this.reset();
+        this.setupModalHandlers();
+        this.setupDropdown()
+
+        this.stateManager = new StateManager(
+            this, window.getRulesText, window.setRulesText,
+        );
     }
 
     initElements() {
-        const ids = [
-            'gotoBtn', 'maxSteps', 'resetBtn', 'gotoStep', 'stepEntry', 'saveBtn',
-            'tapeInput', 'rulesText', 'stepState', 'delayEntry', 'tapeDisplay',
-            'RunPauseBtn', 'copyRulesBtn', 'historySlider', 'machineStatus',
-            'clearRulesBtn', 'stepBtn', 'results', 'uploadBtn', 'fileInput',
-            'resources', 'ControlBtn', 'buildGIF', 'generateGIF',
-            'gifCard', 'gifContainer', 'gifPreview', 'GIFStatus',
-            'cancelGIF', 'modelInputName',
-        ];
-
-        for (const id of ids) {
+        for (const id of this.docIDs) {
             this[id] = document.getElementById(id);
         }
+    }
+
+    delElements() {
+        this.docIDs.forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) {
+                const newElem = elem.cloneNode(true);
+                elem.parentNode.replaceChild(newElem, elem);
+            }
+        });
     }
 
     setupEventListeners() {
@@ -45,15 +77,6 @@ class Simulator_GUI {
         this.modelInputName.addEventListener('input', () => {
             this.modelName = this.modelInputName.value.trim() || "turing_test";
         });
-
-        // Upload and load/reset
-        this.uploadBtn.addEventListener('click', () => this.fileInput.click());
-        this.fileInput.addEventListener('change', (e) => this.uploadRules(e));
-
-        // Rules and state
-        this.copyRulesBtn.addEventListener('click', () => this.copyRules());
-        this.clearRulesBtn.addEventListener('click', () => this.clearRules());
-        this.saveBtn.addEventListener("click", () => this.downloadRules());
 
         // Navigation and step controls
         this.resetBtn.addEventListener('click', withScrollToTop(() => this.reset()));
@@ -74,7 +97,6 @@ class Simulator_GUI {
                 this.run();
             }
         });
-
         this.updateControlButton('run');
 
         // Show GIF card
@@ -95,35 +117,345 @@ class Simulator_GUI {
                 this.setAllButtonsDisabled(false)
             }
         });
+
+        // Copy & Clear buttons setup
+        this.copyRulesBtn.addEventListener('click', () => {
+            this.stateManager.copyText(window.getRulesText(), "Transition rules");
+        });
+
+        this.clearRulesBtn.addEventListener('click', () => {
+            this.stateManager.clearText(null, "all transition rules", window.setRulesText.bind(this));
+        });
+
+        this.copyTapeBtn.addEventListener('click', () => {
+            this.stateManager.copyText(this.tapeInput, "Initial Tape");
+        });
+
+        this.clearTapeBtn.addEventListener('click', () => {
+            this.stateManager.clearText("tapeInput", "initial Tape");
+        });
+
+        // Import and Exports
+        this.importBtn.addEventListener("click", () => this.handleImports());
+        this.exportBtn.addEventListener("click", () => this.handleExports());
     }
 
-    uploadRules(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    toggleModal(modalElement, show) {
+        if (!modalElement) return;
+        modalElement.classList.toggle('active', show);
+        document.body.style.overflow = show ? 'hidden' : '';
+    }
 
-        const reader = new FileReader();
-        document.getElementById('modelInputName').value = file.name.replace(/\.[^/.]+$/, '');
+    setupModalHandlers() {
 
-        reader.onload = (e) => {
-            try {
-                const text = e.target.result.trim();
-                window.setRulesText(text);
-                this.stepBtn.disabled = true;
-                this.RunPauseBtn.disabled = true;
-                this.ControlBtn.disabled = true;
-            } catch (error) {
-                console.error("Error loading file:", error);
-                this.updateMachineStatus("Error loading file", "text-danger");
-                alert(`Error loading file: ${error.message}`);
+        this.importBtn?.addEventListener('click', () => this.toggleModal(this.importModal, true));
+        this.exportBtn?.addEventListener('click', () => this.toggleModal(this.exportModal, true));
+
+        // Shared close handler
+        const closeAllModals = () => {
+            this.toggleModal(this.importModal, false);
+            this.toggleModal(this.exportModal, false);
+        };
+
+        // Close buttons and backdrop
+        document.querySelectorAll('.tm-modal-close').forEach(btn => {
+            btn.addEventListener('click', closeAllModals);
+        });
+
+        // Backdrop click
+        [this.importModal, this.exportModal].forEach(modal => {
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) closeAllModals();
+            });
+        });
+
+    }
+
+    setupDropdown() {
+        document.addEventListener('DOMContentLoaded', () => {
+            const examplesMenu = document.getElementById('examplesMenu');
+            examplesMenu.innerHTML = '';
+
+            // Add examples to dropdown
+            Object.entries(this.EXAMPLES).forEach(([displayName, filename]) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a class="dropdown-item fst-italic" href="#" data-example="${filename}">
+                        ${displayName}
+                    </a>
+                `;
+                li.addEventListener('click', () => this.loadExample(displayName));
+                examplesMenu.appendChild(li);
+            });
+
+            // Add divider and blank option
+            examplesMenu.appendChild(document.createElement('hr')).classList.add('dropdown-divider', 'm-0');
+
+            const blankLi = document.createElement('li');
+            blankLi.innerHTML = `
+                <a class="dropdown-item fst-italic" href="#" data-example="empty">
+                    Blank Machine
+                </a>
+            `;
+            blankLi.addEventListener('click', () => this.resetToBlankMachine());
+            examplesMenu.appendChild(blankLi);
+        });
+    }
+
+    async loadExample(displayName) {
+        try {
+            const filename = this.EXAMPLES[displayName]
+            const response = await fetch(`./example_files/${filename}`);
+            if (!response.ok) throw new Error('File not found');
+
+            const exampleConfig = await response.json();
+            this.loadState(exampleConfig);
+
+            // Update UI
+            document.querySelector('#examplesDropdown').textContent = displayName;
+            document.getElementById('modelInputName').value = displayName;
+            this.updateMachineStatus(`'${displayName}' Loaded`, "text-secondary");
+            this.modelName = displayName;
+        } catch (error) {
+            console.error('Error loading example:', error);
+            alert(`Failed to load example: ${filename}\n${error.message}`);
+        }
+    }
+
+    resetToBlankMachine() {
+        document.querySelector('#examplesDropdown').textContent = 'Select example...';
+        document.getElementById('modelInputName').value = '';
+        this.tapeInput.value = "",
+        this.reset()
+        this.rulesNo = 0;
+        this.modelName = "";
+        window.setRulesText("")
+        this.updateMachineStatus(`Empty Model Created`, "text-secondary");
+
+    }
+
+    handleImports() {
+        const fileInput = document.getElementById('fileInput');
+        const previewElement = document.getElementById("importPreview");
+        const importConfirmBtn = document.getElementById('importConfirmBtn');
+        const filePreviewContainer = document.getElementById('filePreviewContainer');
+        const exportClose = document.getElementById('closeImport');
+
+        let selectedFile = null;
+        let loadedFileType = '';
+        let file_data = '';
+
+        function clearFilePreview() {
+            filePreviewContainer.innerHTML = '';
+            selectedFile = null;
+            loadedFileType = '';
+            previewElement.value = ''
+            importConfirmBtn.disabled = true;
+        }
+
+        function showFilePreview(file) {
+            const chip = document.createElement('div');
+            chip.className = 'tm-file-preview-chip';
+
+            const fileNameSpan = document.createElement('span');
+            fileNameSpan.textContent = file.name;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.innerHTML = '&times;';
+            removeBtn.title = 'Remove file';
+
+            removeBtn.addEventListener('click', () => {
+                clearFilePreview();
+                fileInput.value = '';
+            });
+
+            chip.appendChild(fileNameSpan);
+            chip.appendChild(removeBtn);
+
+            filePreviewContainer.appendChild(chip);
+
+            importConfirmBtn.disabled = false;
+        }
+
+        function handleFiles(files) {
+            if (!files.length) return;
+
+            if (files.length >= 2)
+                alert("Multiple files selected. Select a single file model");
+
+            const file = files[0];
+            const allowedExts = ['json', 'jsonl', 'yaml', 'txt'];
+            const ext = file.name.split('.').pop().toLowerCase();
+
+            if (!allowedExts.includes(ext)) {
+                alert('Unsupported file type');
+                clearFilePreview();
+                return;
             }
+            clearFilePreview();
+
+            selectedFile = file;
+            loadedFileType = ext;
+
+            showFilePreview(file);
+            return selectedFile;
+        }
+
+        // Option card click opens file dialog with appropriate accept attribute
+        document.querySelectorAll('.tm-option-card').forEach(card => {
+            card.addEventListener('click', () => {
+                fileInput.accept = `.${card.dataset.type}`;
+                fileInput.click();
+            });
+        });
+
+        // Drag and drop zone setup
+        const dropzone = document.querySelector('.tm-file-dropzone');
+        if (dropzone) {
+            dropzone.addEventListener('click', () => fileInput.click());
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e =>
+                dropzone.addEventListener(e, preventDefaults, false)
+            );
+
+            ['dragenter', 'dragover'].forEach(e =>
+                dropzone.addEventListener(e, () => dropzone.classList.add('highlight'), false)
+            );
+
+            ['dragleave', 'drop'].forEach(e =>
+                dropzone.addEventListener(e, () => dropzone.classList.remove('highlight'), false)
+            );
+
+            dropzone.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        // File input change event triggers handleFiles
+        fileInput.addEventListener('change', async (e) => {
+            selectedFile = handleFiles(e.target.files);
+            e.target.value = '';
+            if (loadedFileType === 'json') {
+                file_data = await this.stateManager.loadJSON(selectedFile);
+                previewElement.value = JSON.stringify(file_data, null, 2);
+            } else if (loadedFileType === 'jsonl') {
+                file_data = await this.stateManager.loadJSONLines(selectedFile);
+                previewElement.value = JSON.stringify(file_data, null, 2);
+            } else if (loadedFileType === 'yaml') {
+                file_data = await this.stateManager.loadYAML(selectedFile);
+                previewElement.value = jsyaml.dump(file_data);
+            } else if (loadedFileType === 'txt') {
+                file_data = await this.stateManager.loadRules(selectedFile);
+                previewElement.value = file_data;
+            } else {
+                throw new Error('Unsupported file type');
+            }
+        });
+
+        // Import button click event
+        importConfirmBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                alert('No file selected');
+                return;
+            }
+
+            const file_name = selectedFile.name.replace(/\.[^/.]+$/, '');
+            document.getElementById('modelInputName').value = file_name;
+            this.modelName = file_name;
+
+            if (loadedFileType === 'txt') {
+                window.setRulesText(file_data);
+            } else {
+                this.loadState(file_data);
+            }
+            this.updateMachineStatus(`'${file_name}' loaded`, "text-success");
+        });
+
+        // Close buttons and backdrop
+        exportClose.addEventListener("click", () => {
+            clearFilePreview();
+        });
+    }
+
+    loadState(file_data) {
+        // Restore configuration inputs with defaults
+        const configMap = {
+            LEFT:           ['leftSymbolInput',  'L'],
+            RIGHT:          ['rightSymbolInput', 'R'],
+            BLANK:          ['blankSymbolInput', '_'],
+            INIT_STATE:     ['initStateInput', 'INIT'],
+            HALT_STATE:     ['haltStateInput', 'HALT'],
+            COMMENT_PREFIX: ['commentSymbolInput', '//'],
+            MAX_STATES:     ['maxStatesInput', 1024],
+            MAX_STATE_SIZE: ['maxStateSizeInput', 32],
+            MAX_TAPE_LEN:   ['maxTapeLenInput', 1048576],
+            TRANSITION_SIZE:['transitionSizeInput', 710000]
         };
 
-        reader.onerror = () => {
-            this.updateMachineStatus("Error reading file", "text-danger");
-            alert("Error reading file");
+        Object.entries(configMap).forEach(([key, [elementId, defaultVal]]) => {
+            const value = (file_data[key] !== undefined && file_data[key] !== '')
+                ? file_data[key]
+                : defaultVal;
+            document.getElementById(elementId).value = value;
+        });
+
+        TuringConfig.updateFromInputs();
+
+        // Restore CPU state
+        const cpuDefaults = {
+            tape: [],
+            input_tape: '',
+            running: false,
+            head_position: 0,
+            current_state: '',
         };
 
-        reader.readAsText(file);
+        // Restore transition rules separately
+        const rulesText = file_data.rulesText || '';
+        window.setRulesText(rulesText);
+        const transitions_list = new TuringConfig().parseTransitionRules(file_data.rulesText);
+        const new_cpu = new MachineLogic(transitions_list, file_data.INIT_STATE, file_data.HALT_STATE);
+        this.cpu = new_cpu;
+
+        Object.keys(cpuDefaults).forEach(key => {
+            this.cpu[key] = file_data[key] ?? cpuDefaults[key];
+        });
+
+        // Restore UI state
+        const uiDefaults = {
+            rulesNo: 0,
+            max_len: 0,
+            tape_len: 0,
+            history: [],
+            step_count: 0,
+            initial_tape: '',
+            running: false,
+        };
+
+        Object.keys(uiDefaults).forEach(key => {
+            this[key] = file_data[key] ?? uiDefaults[key];
+        });
+
+        // Update UI elements
+        if (this.tapeInput) this.tapeInput.value = this.initial_tape;
+
+        // Update control button
+        if (file_data.ControlBtn?.split(" ").includes("btn-reset")) {
+            this.updateControlButton('reset');
+        } else {
+            this.pause(false)
+        }
+        this.stepBtn.disabled = file_data.stepBtn ?? false;
+        this.buildGIF.disabled = file_data.buildGIF ?? false;
+        this.RunPauseBtn.disabled = file_data.RunPauseBtn ?? false;
+
+        this.updateUI();
+        this.updateResults();
+        return true;
     }
 
     reset() {
@@ -139,12 +471,14 @@ class Simulator_GUI {
             this.cpu = new MachineLogic(transitions);
             this.cpu._setTape(this.initial_tape);
 
+            this.max_len = 0;
+            this.tape_len = 0;
             this.step_count = 0;
             this.running = false;
             this.buildGIF.disabled = true;
             this.stepBtn.disabled = false;
-            this.RunPauseBtn.disabled = false;
             this.ControlBtn.disabled = false;
+            this.RunPauseBtn.disabled = false;
             this.updateControlButton('run');
             this.updateMachineStatus(`Model '${this.modelName}' Loaded`, "text-secondary");
             this.rulesNo = this.cpu.transitions_list.length
@@ -155,9 +489,8 @@ class Simulator_GUI {
                 move: "N",
             }];
 
+            // Update UI & results
             this.updateUI();
-
-            // Update results
             this.updateResults();
 
         } catch (error) {
@@ -171,6 +504,7 @@ class Simulator_GUI {
         try {
             const steps_to_run = parseInt(this.stepEntry.value) || this.BASE_STEP;
             const max_allowed = parseInt(this.maxSteps.value) || this.MAX_STEPS;
+            this.buildGIF.disabled = false;
             if (printStep) {
                 this.updateMachineStatus(`Machine ran for ${steps_to_run} steps`, "text-primary");              // When started
             }
@@ -190,17 +524,18 @@ class Simulator_GUI {
                     this.cpu._stepLogic();
                     this.step_count++;
                     this.history[this.step_count -1]['move'] = this.cpu.headMove;
-
+                    this.tape_len = Object.keys(this.cpu.tape).length;
+                    this.max_len = Math.max(this.max_len, this.tape_len);
                     this.history.push({
                         tape: { ...this.cpu.tape },
                         head: this.cpu.head_position,
                         state: this.cpu.current_state,
                         move: "N",
+                        tape_len: this.tape_len,
                     });
 
+                    // Update UI & results
                     this.updateUI();
-
-                    // Update results
                     this.updateResults();
                 } catch (error) {
                     const textContent = `Machine STUCK | After ${this.step_count} steps`;
@@ -224,7 +559,6 @@ class Simulator_GUI {
         clearTimeout(this.auto_run_timeout);
         this.updateControlButton('run');
         this.stepBtn.disabled = false;
-        this.buildGIF.disabled = false;
     }
 
     HALT() {
@@ -241,8 +575,6 @@ class Simulator_GUI {
     run() {
         this.running = true;
         this.stepBtn.disabled = true;
-        this.buildGIF.disabled = true;
-
 
         this.updateControlButton('pause');
         this.autoStep();
@@ -294,6 +626,12 @@ class Simulator_GUI {
         this.seekHistory(step);
     }
 
+    setAllButtonsDisabled(disabled) {
+        document.querySelectorAll('button:not(#cancelGIF)').forEach(btn => {
+            btn.disabled = disabled;
+        });
+    }
+
     updateUI() {
         // Update tape display
         this.tapeDisplay.innerHTML = "";
@@ -303,8 +641,8 @@ class Simulator_GUI {
         const max_pos = positions.length > 0 ? Math.max(...positions) : 0;
 
         // Show at least 5 cells before and after the head position
-        const start_pos = Math.min(min_pos, this.cpu.head_position) - 5;
-        const end_pos = Math.max(max_pos, this.cpu.head_position) + 5;
+        const start_pos = Math.min(min_pos, this.cpu.head_position) - 7;
+        const end_pos = Math.max(max_pos, this.cpu.head_position) + 7;
 
         for (let pos = start_pos; pos <= end_pos; pos++) {
             const cell = document.createElement('div');
@@ -347,6 +685,7 @@ class Simulator_GUI {
         ];
 
         const results = [
+            `   Tape Size: Max = ${this.max_len} | Now = ${this.tape_len} `,
             `Initial Tape: '${this.initial_tape}'`,
             ` Result Tape: '${final_tape}'`,
             ` Steps Count: ${this.step_count}`,
@@ -396,15 +735,9 @@ class Simulator_GUI {
     }
 
     updateMachineStatus(text, colorClass = "text-primary") {
-        const statusEl = document.getElementById("machineStatus");
+        const statusEl = this.machineStatus;
         statusEl.className = `machineStatus fw-bold text-center ${colorClass}`;
         statusEl.textContent = text;
-    }
-
-    setAllButtonsDisabled(disabled) {
-        document.querySelectorAll('button:not(#cancelGIF)').forEach(btn => {
-            btn.disabled = disabled;
-        });
     }
 
     async generateGIFFromHistory() {
@@ -415,7 +748,7 @@ class Simulator_GUI {
             // Initialize GIFBuilder
             this.gifBuilder = new GIFBuilder(
                 this.tapeDisplay, this.GIFStatus,
-                this.modelName, this.rulesNo,
+                this.modelName, this.rulesNo, this.max_len,
             );
 
             // Generate GIF
@@ -431,134 +764,35 @@ class Simulator_GUI {
         }
     }
 
-    copyRules() {
-        const rules = window.getRulesText();
+    handleExports() {
+        const previewElement = document.getElementById("exportPreview");
+        const exportFormatRadios = document.querySelectorAll('input[name="exportFormat"]');
+        const exportClose = document.getElementById('closeExport');
+        let file_data = "";
+        let selectedFormat = "";
 
-        if (!rules.trim()) {
-            alert("No rules to copy");
-            return;
-        }
-
-        navigator.clipboard.writeText(rules)
-            .then(() => alert("Transition rules copied to clipboard"))
-            .catch(err => {
-                console.error("Failed to copy rules:", err);
-                alert("Failed to copy rules. Please try again.");
+        // --- Update preview when format changes ---
+        exportFormatRadios.forEach(radio => {
+            radio.addEventListener("change", () => {
+                selectedFormat = document.querySelector('input[name="exportFormat"]:checked').value;
+                file_data = this.stateManager.exportFileData(selectedFormat);
+                previewElement.value = file_data;
             });
-    }
+        });
 
-    clearRules() {
-        if (confirm("Are you sure you want to clear all transition rules?")) {
-            window.setRulesText("");
-        }
-    }
+        // --- Download current preview on Save click ---
+        this.saveBtn.addEventListener("click", () => {
+            this.stateManager.downloadFile(file_data, selectedFormat);
+        });
 
-    downloadRules() {
-        const rulesText = window.getRulesText(); // Get current rules from Ace or text storage
-        const blob = new Blob([rulesText], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${this.modelName}.txt`;
-        a.style.display = "none";
-
-        document.body.appendChild(a);
-        a.click();
-
-        // Cleanup
-        setTimeout(() => {
-            URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }, 100);
-    }
-
-    toJSON() {
-        return {
-            step_count: this.step_count,
-            running: this.running,
-            initial_tape: this.initial_tape,
-            history: this.history,
-            transitions: this.cpu?.transitions,
-            head_position: this.cpu?.head_position,
-            current_state: this.cpu?.current_state,
-            halt_state: this.cpu?.halt_state,
-            tape: this.cpu?.tape,
-            rulesText: window.getRulesText(), // From Ace Editor or wherever you're storing rules
-        };
-    }
-
-    downloadJSON() {
-        const data = this.toJSON();
-        const jsonStr = JSON.stringify(data, null, 2); // Pretty-print
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${this.modelName}.json`;
-        a.click();
-
-        URL.revokeObjectURL(url);
-    }
-
-    uploadState(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-
-        reader.onload = (e) => {
-            try {
-                const json = JSON.parse(e.target.result);
-                if (!json || typeof json !== "object") throw new Error("Invalid file format");
-
-                // Set rules text from saved string
-                window.setRulesText(json.rulesText || "");
-
-                // Restore machine state
-                this.initial_tape = json.initial_tape || "";
-                this.cpu = new MachineLogic(json.transitions || []);
-                this.cpu._setTape(this.initial_tape);
-                this.cpu.head_position = json.head_position || 0;
-                this.cpu.current_state = json.current_state || "q0";
-                this.cpu.halt_state = json.halt_state || "halt";
-                this.cpu.tape = json.tape || {};
-
-                this.step_count = json.step_count || 0;
-                this.running = false; // Always reset running state
-
-                this.history = json.history || [{
-                    tape: { ...this.cpu.tape },
-                    head: this.cpu.head_position,
-                    state: this.cpu.current_state,
-                    move: "N",
-                }];
-
-                this.updateControlButton('run');
-                this.stepBtn.disabled = false;
-                this.RunPauseBtn.disabled = false;
-                this.updateUI();
-                this.updateResults();
-                this.updateMachineStatus("Machine state loaded", "text-success");
-
-            } catch (error) {
-                console.error("Error loading state file:", error);
-                this.updateMachineStatus("Invalid or corrupted state file", "text-danger");
-                alert(`Error loading file: ${error.message}`);
-            }
-        };
-
-        reader.onerror = () => {
-            this.updateMachineStatus("Error reading file", "text-danger");
-            alert("Error reading file");
-        };
-
-        reader.readAsText(file);
+        // Close buttons and clear exsting selections
+        exportClose.addEventListener("click", () => {
+            exportFormatRadios.forEach(radio => {radio.checked = false;});
+            previewElement.value = ""
+        });
     }
 
 }
-
 
 export { Simulator_GUI };
 

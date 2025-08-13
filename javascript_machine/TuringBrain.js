@@ -12,6 +12,21 @@ class TuringConfig {
     static MAX_STATE_SIZE = 32;
     static TRANSITION_SIZE = 710000;
 
+    // Optionally add a method to update config from inputs
+    static updateFromInputs() {
+        this.LEFT = document.getElementById('leftSymbolInput').value || this.LEFT;
+        this.RIGHT = document.getElementById('rightSymbolInput').value || this.RIGHT;
+        this.BLANK = document.getElementById('blankSymbolInput').value || this.BLANK;
+        this.INIT_STATE = document.getElementById('initStateInput').value || this.INIT_STATE;
+        this.HALT_STATE = document.getElementById('haltStateInput').value || this.HALT_STATE;
+        this.COMMENT_PREFIX = document.getElementById('commentSymbolInput').value || this.COMMENT_PREFIX;
+
+        this.MAX_STATES = parseInt(document.getElementById('maxStatesInput').value) || this.MAX_STATES;
+        this.MAX_TAPE_LEN = parseInt(document.getElementById('maxTapeLenInput').value) || this.MAX_TAPE_LEN;
+        this.MAX_STATE_SIZE = parseInt(document.getElementById('maxStateSizeInput').value) || this.MAX_STATE_SIZE;
+        this.TRANSITION_SIZE = parseInt(document.getElementById('transitionSizeInput').value) || this.TRANSITION_SIZE;
+    }
+
     static getTimestamp() {
         return performance.now() / 1000;
     }
@@ -23,10 +38,11 @@ class TuringConfig {
     parseTransitionRules(transitionRulesStr) {
         const transitionsList = [];
         const rawRuleList = transitionRulesStr.split("\n");
+        const comment = TuringConfig.COMMENT_PREFIX
         for (const rawLine of rawRuleList) {
             const line = rawLine.trim();
-            if (!line || line.startsWith("//")) continue;
-            const cleanedLine = line.split("//")[0].trim();
+            if (!line || line.startsWith(comment)) continue;
+            const cleanedLine = line.split(comment)[0].trim();
             const values = cleanedLine.split(/\s+/).filter(val => val.trim());
 
             if (values.length !== 5) {
@@ -34,8 +50,8 @@ class TuringConfig {
             }
 
             const [currentState, currentSymbol, newState, newSymbol, direction] = values;
-            if (direction !== "L" && direction !== "R") {
-                throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be 'L' or 'R'.`);
+            if (direction !== TuringConfig.LEFT && direction !== TuringConfig.RIGHT) {
+                throw new Error(`Invalid move direction: '${direction}' in line "${cleanedLine}". Must be '${TuringConfig.LEFT}' or '${TuringConfig.RIGHT}'.`);
             }
 
             for (const [symbol, label] of [[currentSymbol, "current"], [newSymbol, "new"]]) {
@@ -49,6 +65,10 @@ class TuringConfig {
 
         if (transitionsList.length === 0) {
             throw new Error("No valid transition rules found.");
+        }
+
+        if (transitionsList.length > TuringConfig.TRANSITION_SIZE) {
+            throw new Error(`Too many transition rules: ${transitionsList.length}. Maximum allowed rules is ${TuringConfig.TRANSITION_SIZE}.`);
         }
 
         return transitionsList;
@@ -70,6 +90,7 @@ class MachineLogic {
 
             this.transitions_list = transitionsList;
             this.transitions_dict = this._buildTransitionDict(transitionsList, initState, haltState);
+            this.used_tranistions = new Set();
 
             // Initialize Tape
             this.head_position = 0;
@@ -87,7 +108,7 @@ class MachineLogic {
         const [current_state, current_symbol, new_state, new_symbol, direction] = transition;
 
         if (direction !== TuringConfig.LEFT && direction !== TuringConfig.RIGHT) {
-            throw new Error(`Invalid move direction: '${direction}'. Must be 'L' or 'R'.`);
+            throw new Error(`Invalid move direction: '${direction}'. Must be '${TuringConfig.LEFT}' or '${TuringConfig.RIGHT}'.`);
         }
 
         for (const [symbol, label] of [[current_symbol, "current"], [new_symbol, "new"]]) {
@@ -108,6 +129,7 @@ class MachineLogic {
     _buildTransitionDict(transitionsList, initState, haltState) {
         const transitionDict = {};
         let hasHaltState = false;
+
 
         for (const transition of transitionsList) {
             const [currentState, currentSymbol, newState, newSymbol, moveDirection] = this._validateTransition(transition);
@@ -152,6 +174,10 @@ class MachineLogic {
         this.headMove = "N";
         this.head_position = 0;
         this.current_state = this.init_state;
+
+        if (inputTape.length > TuringConfig.MAX_TAPE_LEN) {
+            throw new Error(`Input Tape size is : ${inputTape.length}. Maximum tape size allowed is ${TuringConfig.MAX_TAPE_LEN}.`);
+        }
 
         for (let i = 0; i < inputTape.length; i++) {
             const symbol = inputTape[i];
@@ -210,7 +236,7 @@ class MachineLogic {
         } else {
             this.tape[this.head_position] = newSymbol;
         }
-
+        this.used_tranistions.add(this.current_state);
         const shift = moveDirection === TuringConfig.LEFT ? -1 : 1;
         this.current_state = newState;
         this.head_position += shift;

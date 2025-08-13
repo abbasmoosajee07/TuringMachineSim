@@ -1,15 +1,16 @@
 import { TuringConfig } from "../javascript_machine/TuringBrain.js";
 
 class GIFBuilder {
-    constructor(tapeDisplay, progressElement, gifName, rulesNo) {
+    constructor(tapeDisplay, progressElement, gifName, rulesNo, max_len) {
         this.validateElements(tapeDisplay, progressElement, gifName);
 
         this.tapeDisplay = tapeDisplay;
         this.progressElement = progressElement;
         this.isBuilding = false;
         this.gif = null;
-        this.gifName = gifName;
-        this.rulesNo = rulesNo;
+        this.gifName = gifName ?? 'Unnamed';
+        this.rulesNo = rulesNo ?? 0;
+        this.max_len = max_len ?? 0;
         this._initialTapeString = '';
         this.frameBgColor = "#ffffff";
         this.textColor = "#1b1b1b";
@@ -77,15 +78,6 @@ class GIFBuilder {
     setupUI() {
         this.progressElement.textContent = 'Preparing GIF...';
         document.getElementById('gifCard').style.display = 'block';
-        this.setupSpeedControl();
-    }
-
-    setupSpeedControl() {
-        const gifSpeedSlider = document.getElementById('gifSpeed');
-        const gifSpeedLabel = document.getElementById('gifSpeedLabel');
-        gifSpeedSlider.addEventListener('input', () => {
-            gifSpeedLabel.textContent = gifSpeedSlider.value;
-        });
     }
 
     async _processFrames(history, seekCallback) {
@@ -133,30 +125,49 @@ class GIFBuilder {
         seekCallback(frameIndex);
         const frame = this._renderFrame(history[frameIndex], frameIndex);
 
+        // Improved frame handling
         this.tempContainer.innerHTML = '';
         this.tempContainer.appendChild(frame);
-        await this.yieldToUI(20);
 
-        const canvas = await this.captureFrame(frame);
+        // Add slight delay for DOM stabilization
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        // Clone the node to avoid iframe issues
+        const clone = frame.cloneNode(true);
+        const canvas = await this.captureFrame(clone);
         this.gif.addFrame(canvas, { delay: frameDelay, copy: true });
+
+        // Clean up
+        clone.remove();
     }
 
-    async captureFrame(frame) {
-        return await html2canvas(frame, {
-            backgroundColor: this.frameBgColor,
-            scale: this.RESOLUTION_SCALE, // Render at higher resolution
-            useCORS: true,
-            allowTaint: true,
-            width: this.GIF_WIDTH,
-            height: this.GIF_HEIGHT,
-            windowWidth: this.GIF_WIDTH,
-            windowHeight: this.GIF_HEIGHT,
-            logging: false,
-            imageTimeout: 0,
-            letterRendering: true, // Better text rendering
-            ignoreElements: (element) => false
-
-        });
+    async captureFrame(element) {
+        // Create a clean container for capture
+        const captureContainer = document.createElement('div');
+        captureContainer.style.position = 'absolute';
+        captureContainer.style.left = '-9999px';
+        captureContainer.appendChild(element.cloneNode(true));
+        document.body.appendChild(captureContainer);
+        
+        try {
+            return await html2canvas(captureContainer.firstChild, {
+                backgroundColor: this.frameBgColor,
+                scale: this.RESOLUTION_SCALE,
+                useCORS: true,
+                allowTaint: false, // Changed to false to prevent taint warnings
+                width: this.GIF_WIDTH,
+                height: this.GIF_HEIGHT,
+                logging: false,
+                removeContainer: true, // Let html2canvas handle cleanup
+                onclone: (clonedDoc) => {
+                    // Remove any problematic elements from the clone
+                    clonedDoc.querySelectorAll('iframe, script').forEach(el => el.remove());
+                }
+            });
+        } finally {
+            // Ensure cleanup
+            captureContainer.remove();
+        }
     }
 
     updateProgress(current, total) {
@@ -173,7 +184,7 @@ class GIFBuilder {
         const container = this.createFrameContainer();
 
         // Add GIF Header
-        container.appendChild(this.createHeader());
+        container.appendChild(this.createHeader(tape));
 
         // Add tape display
         container.appendChild(this.createTapeDisplay(head, tape));
@@ -208,31 +219,28 @@ class GIFBuilder {
     createHeader() {
         const header = document.createElement('div');
         Object.assign(header.style, {
-            position: 'absolute',
+            zIndex: 10,
+            display: 'flex',
             top: '1px',
             left: '20px',
             right: '20px',
             height: '28px',
-            backgroundColor: this.frameBgColor,
-            color: this.textColor,
             fontSize: '12px',
+            padding:  '4px 6px',
+            position: 'absolute',
+            alignItems: 'center',
             fontFamily: 'monospace',
-            padding: '4px 6px',
             boxSizing: 'border-box',
-            zIndex: 10,
-            display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            color: this.textColor,
+            backgroundColor: this.frameBgColor,
         });
 
-        const modelName = this.gifName || 'Unnamed';
-        const ruleCount = this.rulesNo ?? 0;
-
         const left = document.createElement('span');
-        left.textContent = `Rules: ${ruleCount}`;
+        left.textContent = `Rules Count: ${this.rulesNo} | Max Tape Size: ${this.max_len}`;
 
         const right = document.createElement('span');
-        right.textContent = `${modelName}`;
+        right.textContent = `${this.gifName}`;
         right.style.fontStyle = "italic";
 
         header.appendChild(left);
@@ -249,13 +257,16 @@ class GIFBuilder {
             paddingBottom: '1px',
         });
 
-
         const tapeContainer = document.createElement('div');
         tapeContainer.className = 'tape-container';
 
         for (let i = head - this.midpoint; i < head + this.midpoint + 2; i++) {
             const cell = document.createElement('div');
             cell.className = 'tape-cell' + (i === head ? ' active' : '');
+
+            if (i === head) {
+                cell.style.borderColor = this.gifColor; // e.g. '#f00' or from config
+            }
             cell.textContent = tape[i] ?? TuringConfig.BLANK;
 
             tapeContainer.appendChild(cell);
@@ -280,8 +291,8 @@ class GIFBuilder {
 
         const arrowStyle = `font-size: 40px; vertical-align: middle;`; // Original size
 
-        const leftArrow = `<span style="color: ${headMove === 'L' ? this.gifColor : this.textColor}; ${arrowStyle}">←</span>`;
-        const rightArrow = `<span style="color: ${headMove === 'R' ? this.gifColor : this.textColor}; ${arrowStyle}">→</span>`;
+        const leftArrow = `<span style="color: ${headMove ===  TuringConfig.LEFT ? this.gifColor : this.textColor}; ${arrowStyle}">←</span>`;
+        const rightArrow = `<span style="color: ${headMove === TuringConfig.RIGHT ? this.gifColor : this.textColor}; ${arrowStyle}">→</span>`;
 
         const stateDisplay = document.createElement('div');
         stateDisplay.style.fontSize = '15px'; // Original size
@@ -374,28 +385,6 @@ class GIFBuilder {
                 this.progressElement.textContent = 'GIF generation cancelled';
             }
         }
-    }
-
-    resetGIFCard() {
-
-        // Hide the gif container and preview
-        document.getElementById('gifContainer').style.display = 'none';
-
-        // Clear preview image
-        const gifPreview = document.getElementById('gifPreview');
-        gifPreview.src = '';
-        gifPreview.alt = 'GIF Preview';
-
-        // Clear status
-        document.getElementById('GIFStatus').textContent = '';
-
-        // Hide the entire gif card (if needed)
-        document.getElementById('gifCard').style.display = 'none';
-
-        // Reset download link
-        // const downloadLink = document.getElementById('downloadGIF');
-        // downloadLink.href = '#';
-        // downloadLink.download = 'turing-machine.gif';
     }
 
 }

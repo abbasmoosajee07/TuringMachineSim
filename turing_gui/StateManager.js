@@ -15,59 +15,34 @@ class StateManager {
         this.gui.cpu = cpu;
     }
 
-    copyRules() {
-        const rules = this.getRulesText();
-        if (!rules.trim()) return alert("No rules to copy");
+    copyText(source, label) {
+        const text = (typeof source === "string") 
+            ? source 
+            : source.value || source.textContent || "";
 
-        navigator.clipboard.writeText(rules)
-            .then(() => alert("Transition rules copied to clipboard"))
+        if (!text.trim()) {
+            alert(`No ${label} to copy`);
+            return;
+        }
+
+        navigator.clipboard.writeText(text)
+            .then(() => alert(`${label} copied to clipboard`))
             .catch(err => {
-                console.error("Failed to copy rules:", err);
-                alert("Failed to copy rules. Please try again.");
+                console.error(`Failed to copy ${label}:`, err);
+                alert(`Failed to copy ${label}. Please try again.`);
             });
     }
 
-    clearRules() {
-        if (confirm("Clear all transition rules?")) {
-            this.setRulesText("");
-        }
-    }
-
-    uploadRules(file, onUIUpdate) {
-        if (!file) return;
-
-        const reader = new FileReader();
-        document.getElementById('modelInputName').value =
-            file.name.replace(/\.[^/.]+$/, '');
-
-        reader.onload = (e) => {
-            try {
-                const text = e.target.result.trim();
-                this.setRulesText(text);
-                onUIUpdate?.();
-            } catch (error) {
-                console.error("Error loading file:", error);
-                alert(`Error loading file: ${error.message}`);
+    clearText(target, label, setter = null) {
+        if (confirm(`Clear ${label}?`)) {
+            if (setter) {
+                setter("");
+            } else if (typeof target === "string") {
+                document.getElementById(target).value = "";
+            } else if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+                target.value = "";
             }
-        };
-
-        reader.readAsText(file);
-    }
-
-    downloadRules() {
-        const rulesText = this.getRulesText();
-        const blob = new Blob([rulesText], { type: "text/plain" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${this.gui.modelName}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => {
-            URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }, 100);
+        }
     }
 
     async loadStateFromPath(filePath) {
@@ -99,7 +74,6 @@ class StateManager {
         } = TuringConfig;
 
         const cpu = this.getCPU();
-        // const gui = this.getGui();
         const cpuState = cpu ? {
             head_position: cpu.head_position,
             current_state: cpu.current_state,
@@ -109,15 +83,16 @@ class StateManager {
         } : {};
 
         return {
-            LEFT, RIGHT, BLANK, INIT_STATE, HALT_STATE, COMMENT_PREFIX,
-            MAX_STATES, MAX_TAPE_LEN, MAX_STATE_SIZE, TRANSITION_SIZE,
+            name: this.gui.modelName,
             rulesText: this.getRulesText(),
+            initial_tape: this.gui.initial_tape,
             rulesNo: this.gui.rulesNo,
             max_len: this.gui.max_len,
-            history: this.gui.history,
             tape_len: this.gui.tape_len,
             step_count: this.gui.step_count,
-            initial_tape: this.gui.initial_tape,
+            LEFT, RIGHT, BLANK, INIT_STATE, HALT_STATE, COMMENT_PREFIX,
+            MAX_STATES, MAX_TAPE_LEN, MAX_STATE_SIZE, TRANSITION_SIZE,
+            history: this.gui.history,
             ...cpuState,
             buildGIF:  document.getElementById("buildGIF").disabled,
             stepBtn: document.getElementById("stepBtn").disabled,
@@ -126,20 +101,7 @@ class StateManager {
         };
     }
 
-    downloadJSON() {
-        const jsonStr = JSON.stringify(this.saveState(), null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${this.gui.modelName}.json`;
-        a.click();
-
-        URL.revokeObjectURL(url);
-    }
-
-    loadJSON(file) {
+    async loadJSON(file) {
         return new Promise((resolve, reject) => {
             if (!file) {
                 reject(new Error("No file provided"));
@@ -168,35 +130,6 @@ class StateManager {
 
             reader.readAsText(file);
         });
-    }
-
-    downloadJSONLines() {
-        const data = this.saveState();
-        const lines = [];
-
-        // 1. Add metadata (everything except history) as the first line
-        const { history, ...metadata } = data;
-        lines.push(JSON.stringify(metadata));
-
-        // 2. Add each history entry as a separate line
-        if (history && history.length > 0) {
-            history.forEach(entry => {
-                lines.push(JSON.stringify(entry));
-            });
-        }
-
-        // 3. Join with newlines and create blob
-        const jsonlStr = lines.join('\n');
-        const blob = new Blob([jsonlStr], { type: 'application/jsonl' });
-
-        // 4. Download
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${this.gui.modelName}.jsonl`; // or .ndjson
-        a.click();
-
-        URL.revokeObjectURL(url);
     }
 
     async loadJSONLines(file) {
@@ -242,6 +175,129 @@ class StateManager {
         }
 
         return state;
+    }
+
+    loadRules(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject("No file provided");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const text = e.target.result.trim();
+                    resolve(text); // resolves with the file text
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            reader.onerror = reject;
+
+            reader.readAsText(file);
+        });
+    }
+
+    async loadYAML(file) {
+        return new Promise((resolve, reject) => {
+            if (!file) {
+                reject(new Error("No file provided"));
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                try {
+                    // Reverse of dump() — parse YAML text into object
+                    const state = jsyaml.load(e.target.result);
+
+                    if (!state || typeof state !== "object") {
+                        throw new Error("Invalid YAML format");
+                    }
+
+                    resolve(state); // Let caller decide how to handle it (e.g., this.loadState(state))
+                } catch (error) {
+                    console.error("Error parsing YAML:", error);
+                    alert(`Error loading YAML file: ${error.message}`);
+                    reject(error);
+                }
+            };
+
+            reader.onerror = () => {
+                reject(new Error("Error reading YAML file"));
+            };
+
+            reader.readAsText(file);
+        });
+    }
+
+    exportFileData(format) {
+        let file_data = "";
+        switch (format) {
+            case "txt":
+                file_data = this.getRulesText();
+                break;
+
+            case "json":
+                file_data = JSON.stringify(this.saveState(), null, 2);
+                break;
+
+            case "jsonl":
+                const json_data = this.saveState();
+                const { history, ...metadata } = json_data;
+                const lines = [JSON.stringify(metadata)];
+                if (history?.length) {
+                    history.forEach(entry => lines.push(JSON.stringify(entry)));
+                }
+                file_data = lines.join("\n");
+                break;
+
+            case "yaml":
+                file_data = jsyaml.dump(this.saveState());
+                break;
+
+            default:
+                console.warn("Unknown export format selected");
+        }
+        return file_data;
+    }
+
+    downloadFile(file_data, file_type) {
+        return new Promise((resolve, reject) => {
+            let mimeType;
+            switch (file_type) {
+                case "json":
+                    mimeType = "application/json";
+                    break;
+                case "jsonl":
+                    mimeType = "application/x-ndjson"; // standard for JSON Lines
+                    break;
+                case "txt":
+                    mimeType = "text/plain";
+                    break;
+                case "yaml":
+                    mimeType = "text/yaml";
+                    break;
+                default:
+                    reject(new Error(`Unsupported file type: ${file_type}`));
+                    return;
+            }
+
+            const blob = new Blob([file_data], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${this.gui.modelName}.${file_type}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            URL.revokeObjectURL(url);
+            resolve();
+        });
     }
 
 }

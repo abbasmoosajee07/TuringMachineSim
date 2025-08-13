@@ -98,24 +98,11 @@ Then open `http://localhost:8000` in your browser.
 | Feature                   | Description                                            |
 | ------------------------- | ------------------------------------------------------ |
 | ~~Tape GIF~~     | Create a Tape GIF showing the transformation     |
-| Export/Import Config      | Save/load machine rules and tape setup in JSON format  |
-| Tape Scrolling Buttons    | Navigate long tapes easily with arrows                 |
-| Web Export                | Generate shareable URL or embed for configured machine |
-| Dark Mode Toggle          | Switch to a dark-themed UI for accessibility           |
+| ~~Export/Import Config~~       | Save/load machine rules and tape setup in JSON format  |
 | ~~Run Summary Modal~~         | Display stats and final tape state after halting       |
+| Dark Mode Toggle          | Switch to a dark-themed UI for accessibility           |
 | Rule Syntax Validator     | Highlight and report malformed rules             |
-
-##### Planned Machine Types
-
-| Possible Variations | Description |
-|--------------|-------------|
-| **Non-deterministic Machine** | Allows multiple possible transitions for the same `(state, symbol)` pair. At each step, one rule is selected at random, simulating non-deterministic computation. Useful for exploring theoretical concepts like NP problems. |
-| **Multi-Tape Machine** | Uses multiple independent tapes, each with its own read/write head. Transitions can read/write on all tapes simultaneously. Often used to model more efficient machines. |
-| **Semi-Infinite Machine** | A machine whose tape is infinite in one direction only (usually to the right), with a fixed left boundary. Reflects physical memory constraints more realistically. |
-| **Enumerator Machine** | A Turing machine equipped with a write-only output tape, used to generate formal languages. Accepts a language by enumerating its strings. Equivalent in power to Turing machines but models generation instead of recognition. |
-| **Multi-Head Machine** | Has multiple heads on a single tape, each able to read/write independently. Allows more complex behaviors and parallel scanning. |
-| **Multi-Track Machine** | The tape is composed of multiple parallel tracks at each cell (like a vector), with each head reading/writing all tracks at once. Useful for modeling complex data per cell. |
-| **K-Dimensional Machine** | Generalizes the tape from 1D to a 2D or higher-dimensional grid. The head can move in multiple directions (up, down, left, right, etc.), useful for spatial computation models. |
-
+| Web Export           | Generate shareable URL or embed for configured machine, using Github GISTs |
+| Local Storage            | Add Local browser storage to save machine states |
 
 ---
