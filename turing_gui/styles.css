@@ -420,7 +420,7 @@ input.form-control:focus {
   color: var(--tm-text);
   outline-offset: 2px;
   transition: border-color 0.2s ease;
-  
+
   &:focus {
     border-color: var(--tm-primary);
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
@@ -442,12 +442,12 @@ input.form-control:focus {
   background-color: var(--tm-surface-light);
   transition: all 0.2s ease;
   user-select: none;
-  
+
   &:hover {
     border-color: var(--tm-primary);
     background-color: var(--tm-primary-light);
   }
-  
+
   p { margin: 0; font-size: 14px; color: var(--tm-text-secondary); }
 }
 
@@ -507,9 +507,9 @@ input.form-control:focus {
 
 .tm-export-option {
   position: relative;
-  
+
   input[type="radio"] { position: absolute; opacity: 0; }
-  
+
   label {
     display: block;
     padding: 6px;
@@ -517,9 +517,9 @@ input.form-control:focus {
     cursor: pointer;
     transition: all 0.2s ease;
   }
-  
+
   &:hover label { background-color: var(--tm-surface-light); }
-  
+
   input[type="radio"]:checked + .tm-option-content {
     background-color: var(--tm-primary-light);
     border-color: var(--tm-primary);
@@ -544,7 +544,7 @@ input.form-control:focus {
   justify-content: center;
   border-radius: 6px;
   color: var(--tm-primary);
-  
+
   i { font-size: 30px !important; padding: 2 !important; }
 }
 
